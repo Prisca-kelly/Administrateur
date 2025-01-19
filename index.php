@@ -6,7 +6,7 @@
 <head>
     <?php include "include/common/head.php"; ?>
     <title>Connexion</title>
-    <link rel="stylesheet" href="../assets/vendor/css/pages/page-auth.css" />
+    <link rel="stylesheet" href="assets/vendor/css/pages/page-auth.css" />
 </head>
 
 <body>
