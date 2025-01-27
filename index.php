@@ -1,4 +1,33 @@
-<?php ?>
+<?php
+require('model/config/database.php'); // Inclure la connexion
+require('model/config/util.php');
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Récupérer les données du formulaire
+    $email = $_POST['email'];
+    $password = $_POST['password'];
+
+    // Vérification dans la base de données (avec parenthèses pour éviter l'erreur de priorité)
+    $stmt = $bdd->prepare("
+        SELECT * FROM utilisateur 
+        WHERE email = :email AND mot_de_passe = :mot_de_passe
+    ");
+    $stmt->execute([
+        ':email' => $email,
+        ':mot_de_passe' => $password
+    ]);
+if ($stmt->rowCount()==1){
+    $user = $stmt->fetch();
+    init_session();
+    $_SESSION["id"]= $user["id_utilisateur"];
+    header("Location:accueil.php");
+}
+else{
+    echo "<script>alert('Email ou mot de passe incorrecte');</script>";
+}
+}
+?>
+
 <!DOCTYPE html>
 <html lang="fr" class="light-style layout-menu-fixed" dir="ltr" data-theme="theme-default" data-assets-path="assets/"
     data-template="vertical-menu-template-free">
@@ -6,7 +35,7 @@
 <head>
     <?php include "include/common/head.php"; ?>
     <title>Connexion</title>
-    <link rel="stylesheet" href="../assets/vendor/css/pages/page-auth.css" />
+    <link rel="stylesheet" href="assets/vendor/css/pages/page-auth.css" />
 </head>
 
 <body>
@@ -74,15 +103,15 @@
                         <h4 class="mb-2">Welcome to Sneat! 👋</h4>
                         <p class="mb-4">Please sign-in to your account and start the adventure</p>
 
-                        <form id="formAuthentication" class="mb-3" action="accueil.php" method="POST">
+                        <form id="formAuthentication" class="mb-3"  method="POST">
                             <div class="mb-3">
-                                <label for="email" class="form-label">Email or Username</label>
-                                <input type="text" class="form-control" id="email" name="email-username"
+                                <label for="email" class="form-label">Email</label>
+                                <input type="text" class="form-control" id="email" name="email"
                                     placeholder="Enter your email or username" autofocus />
                             </div>
                             <div class="mb-3 form-password-toggle">
                                 <div class="d-flex justify-content-between">
-                                    <label class="form-label" for="password">Password</label>
+                                    <label class="form-label" for="password">Mot de passe</label>
                                     <a href="auth-forgot-password-basic.html">
                                         <small>Forgot Password?</small>
                                     </a>

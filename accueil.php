@@ -1,4 +1,8 @@
 <?php
+require('model/config/database.php'); // Inclure la connexion
+require('model/config/util.php');
+init_session();
+if(is_connected()){
 $page = "Accueil"
 ?>
 <!DOCTYPE html>
@@ -36,3 +40,6 @@ $page = "Accueil"
 </body>
 
 </html>
+<?php
+}
+?>
