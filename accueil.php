@@ -1,8 +1,8 @@
 <?php
 require('model/config/database.php'); // Inclure la connexion
-require('model/config/util.php');
-init_session();
-if(is_connected()){
+require('model/config/util.php'); // Fichier qui gère les sessions
+init_session(); // Initialiser la session
+if(is_connected()){  // Vérifié si un utilisateur existe dans la session
 $page = "Accueil"
 ?>
 <!DOCTYPE html>
