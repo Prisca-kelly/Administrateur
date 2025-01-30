@@ -37,6 +37,12 @@
                 <div data-i18n="Basic">Blog</div>
             </a>
         </li>
+        <li class="menu-item <?= $page == 'Hotel' ? 'active' : ''; ?> ">
+            <a href="hotel.php" class="menu-link">
+                <i class="menu-icon tf-icons bx bx-collection"></i>
+                <div data-i18n="Basic">Hotel</div>
+            </a>
+        </li>
         <li class="menu-item <?= $page == 'Destination' ? 'active' : ''; ?> ">
             <a href="destination.php" class="menu-link">
                 <i class="menu-icon tf-icons bx bx-collection"></i>

@@ -6,34 +6,33 @@ $page = "Utilisateur";
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Récupérer les données du formulaire
     $nom = htmlspecialchars($_POST['nom']);
-    $email = $_POST['email'];
+    $email = htmlspecialchars($_POST['email']);
     $password = sha1($_POST['password']);
     $adresse = htmlspecialchars($_POST['adresse']);
     $telephone = htmlspecialchars($_POST['telephone']);
-
-    /**
-     * Il faut vérifier si l'email est correcte
-     * Il faut vérifier si l'email existe déjà dans la base de donnée
-     *  Si oui, envoie une erreur [Ce email existe déj)]
-     *  Si non, alors tu peux enregistrer
-     */
-    // Insertion dans la base de données
-    $stmt = $bdd->prepare("
-        INSERT INTO utilisateur (nom, email, mot_de_passe, adresse, telephone) 
-        VALUES (:nom, :email, :mot_de_passe, :adresse, :telephone)
-    ");
-    try {
-        $stmt->execute([
-            ':nom' => $nom,
-            ':email' => $email,
-            ':mot_de_passe' => $password, // Hash du mot de passe
-            ':adresse' => $adresse,
-            ':telephone' => $telephone
-        ]);
-        echo "<script>alert('Inscription réussie !');</script>";
-        header("Location:accueil.php");
-    } catch (Exception $e) {
-        echo "<script>alert('Erreur : " . $e->getMessage() . "');</script>";
+    if (filter_var($email, FILTER_VALIDATE_EMAIL)) { // Vérifier si l'email est correcte
+        $sql = $bdd->prepare('SELECT * FROM utilisateur WHERE email=?');
+        $sql->execute(array($email));
+        if ($sql->rowCount() == 0) { // vérifier si l'email existe déjà dans la base de donnée 
+            $stmt = $bdd->prepare("INSERT INTO utilisateur (nom, email, mot_de_passe, adresse, telephone) 
+             VALUES (:nom, :email, :mot_de_passe, :adresse, :telephone)");
+            $stmt->execute([
+                ':nom' => $nom,
+                ':email' => $email,
+                ':mot_de_passe' => $password, // Hash du mot de passe
+                ':adresse' => $adresse,
+                ':telephone' => $telephone
+            ]);
+            if ($stmt) {
+                echo "<script>alert('Inscription réussie !');</script>";
+            } else {
+                echo "<script>alert('Erreur : " . $e->getMessage() . "');</script>";
+            }
+        } else {
+            echo "<script>alert('Cet E-mail existe déjà !');</script>";
+        }
+    } else {
+        echo "<script>alert('E-mail invalide !');</script>";
     }
 }
 
@@ -172,7 +171,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                                         <i class="bx bx-dots-vertical-rounded"></i>
                                                     </button>
                                                     <div class="dropdown-menu">
-                                                        <a class="dropdown-item" href="javascript:void(0);">
+                                                        <a class="dropdown-item" href="javascript:void(0);"
+                                                            onclick="showEditModal(1, 'Boris Axel', 'borisaxel1998@gmail.com', '074032387', 'Chantier moderne')">
                                                             <i class="bx bx-edit-alt me-2"></i> Edit
                                                         </a>
                                                         <a class="dropdown-item">
@@ -196,7 +196,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <form class="modal-dialog modal-dialog-centered" role="document" method="POST">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="modalCenterTitle">Modal title</h5>
+                    <h5 class="modal-title" id="modalCenterTitle">Formulaire</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
