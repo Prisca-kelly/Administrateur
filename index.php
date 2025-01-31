@@ -3,26 +3,29 @@ require('model/config/database.php'); // Inclure la connexion
 require('model/config/util.php');
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Récupérer les données du formulaire
-    $email = $_POST['email'];
-    $password = sha1($_POST['password']);
+    // Récupérer et assainir les données du formulaire
+    $email = filter_var($_POST['email'], FILTER_SANITIZE_EMAIL);
+    $password = $_POST['password']; // Le mot de passe est déjà dans son état brut
 
-    // Vérification dans la base de données (avec parenthèses pour éviter l'erreur de priorité)
-    $stmt = $bdd->prepare("
-        SELECT * FROM utilisateur 
-        WHERE email = :email AND mot_de_passe = :mot_de_passe
-    ");
-    $stmt->execute([
-        ':email' => $email,
-        ':mot_de_passe' => $password
-    ]);
+    // Vérification dans la base de données
+    $stmt = $bdd->prepare("SELECT * FROM utilisateur WHERE email = :email");
+    $stmt->execute([ ':email' => $email ]);
+
     if ($stmt->rowCount() == 1) {
         $user = $stmt->fetch();
-        init_session();
-        $_SESSION["id"] = $user["id_utilisateur"];
-        header("Location:accueil.php");
+
+        // Vérifier si le mot de passe correspond avec le hachage stocké
+        if (password_verify($password, $user['mot_de_passe'])) {
+            // Initialiser la session et rediriger l'utilisateur
+            init_session();
+            $_SESSION["id"] = $user["id_utilisateur"];
+            header("Location: accueil.php");
+            exit; // Toujours appeler exit après un header pour éviter toute exécution supplémentaire
+        } else {
+            echo "<script>alert('Email ou mot de passe incorrect');</script>";
+        }
     } else {
-        echo "<script>alert('Email ou mot de passe incorrecte');</script>";
+        echo "<script>alert('Email ou mot de passe incorrect');</script>";
     }
 }
 ?>
