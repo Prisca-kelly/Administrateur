@@ -1,4 +1,4 @@
-<?php
+<?php 
 require('model/config/database.php');
 require('model/config/util.php');
 $page = "Utilisateur";
@@ -19,6 +19,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_user'])) {
         ':id_utilisateur' => $id_utilisateur
     ]);
     echo "<script>alert('Mise à jour réussie !');</script>";
+}
+
+// Suppression d'un utilisateur
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_user'])) {
+    $id_utilisateur = $_POST['delete_user'];
+    try {
+        $stmt = $bdd->prepare("DELETE FROM utilisateur WHERE id_utilisateur = :id_utilisateur");
+        $stmt->execute([':id_utilisateur' => $id_utilisateur]);
+        echo "<script>alert('Utilisateur supprimé avec succès !');</script>";
+    } catch (PDOException $e) {
+        echo "<script>alert('Erreur lors de la suppression : " . $e->getMessage() . "');</script>";
+    }
 }
 
 $users = $bdd->query("SELECT id_utilisateur, nom, email, telephone, adresse, mot_de_passe FROM utilisateur")->fetchAll();
@@ -59,8 +71,13 @@ $users = $bdd->query("SELECT id_utilisateur, nom, email, telephone, adresse, mot
                                                 <td><?= htmlspecialchars($user['telephone']) ?></td>
                                                 <td><?= htmlspecialchars($user['adresse']) ?></td>
                                                 <td>
-                                                    <!-- Echappement des guillemets dans les variables PHP -->
                                                     <button class="btn btn-warning" onclick="showEditModal('<?= addslashes($user['id_utilisateur']) ?>', '<?= addslashes($user['nom']) ?>', '<?= addslashes($user['email']) ?>', '<?= addslashes($user['mot_de_passe']) ?>', '<?= addslashes($user['telephone']) ?>', '<?= addslashes($user['adresse']) ?>')">Modifier</button>
+                                                    
+                                                    <!-- Formulaire de suppression -->
+                                                    <form action="utilisateur.php" method="POST" style="display:inline;">
+                                                        <input type="hidden" name="delete_user" value="<?= $user['id_utilisateur'] ?>">
+                                                        <button type="submit" class="btn btn-danger" onclick="return confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ?')">Supprimer</button>
+                                                    </form>
                                                 </td>
                                             </tr>
                                         <?php endforeach; ?>

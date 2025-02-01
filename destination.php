@@ -1,4 +1,4 @@
-<?php
+<?php  
 require('model/config/database.php'); // Ce code inclut les fichiers nécessaires pour établir une connexion avec la base de données 
 require('model/config/util.php');  // et inclure des fonctions utilitaires.
 $page = "destination";
@@ -38,23 +38,27 @@ if (isset($_POST["ajouter"])) {
 
 // Supprimer une destination
 if (isset($_POST["supprimer"])) {
-    if (!empty($_POST["delete_nom"])) {
-        $delete_nom = htmlspecialchars($_POST["delete_nom"]);
+    if (!empty($_POST["delete_id"])) {
+        $delete_id = htmlspecialchars($_POST["delete_id"]);
 
         try {
-            $sql = "DELETE FROM destination WHERE nom = :delete_nom";
+            $sql = "DELETE FROM destination WHERE id_destination = :delete_id";
             $stmt = $bdd->prepare($sql);
-            $stmt->execute([':delete_nom' => $delete_nom]);
+            $stmt->execute([':delete_id' => $delete_id]);
 
             echo "✅ Destination supprimée avec succès.";
         } catch (PDOException $e) {
             echo "❌ Erreur : " . $e->getMessage();
         }
     } else {
-        echo "❌ Veuillez entrer un nom de destination.";
+        echo "❌ Veuillez entrer un ID de destination.";
     }
 }
+
+// Affichage de la liste des destinations
+$destinations = $bdd->query("SELECT id_destination, nom, description, image FROM destination")->fetchAll();
 ?>
+
 <!DOCTYPE html>
 <html lang="fr" class="light-style layout-menu-fixed" dir="ltr" data-theme="theme-default" data-assets-path="assets/"
     data-template="vertical-menu-template-free">
@@ -96,17 +100,35 @@ if (isset($_POST["supprimer"])) {
                             <button type="submit" name="ajouter" class="btn btn-primary">Ajouter Destination</button>
                         </form>
 
-                        <!-- Formulaire pour supprimer une destination -->
+                        <!-- Affichage des destinations -->
                         <hr>
-                        <h4>Supprimer une destination</h4>
-                        <form action="destination.php" method="post">
-                            <div class="mb-3">
-                                <label for="delete_nom" class="form-label">Nom de la destination à supprimer :</label>
-                                <input type="text" class="form-control" id="delete_nom" name="delete_nom" required>
-                            </div>
-
-                            <button type="submit" name="supprimer" class="btn btn-danger">Supprimer Destination</button>
-                        </form>
+                        <h4>Liste des destinations</h4>
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Nom</th>
+                                    <th>Description</th>
+                                    <th>Image</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($destinations as $destination) : ?>
+                                    <tr>
+                                        <td><?= htmlspecialchars($destination['nom']) ?></td>
+                                        <td><?= htmlspecialchars($destination['description']) ?></td>
+                                        <td><img src="uploads/<?= htmlspecialchars($destination['image']) ?>" width="80" height="60" alt="Image de destination"></td>
+                                        <td>
+                                            <!-- Option de suppression de la destination -->
+                                            <form action="destination.php" method="post" style="display:inline;">
+                                                <input type="hidden" name="delete_id" value="<?= htmlspecialchars($destination['id_destination']) ?>">
+                                                <button type="submit" name="supprimer" class="btn btn-danger">Supprimer</button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
