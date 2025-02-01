@@ -1,16 +1,16 @@
 <?php
-require('model/config/database.php'); // Ce code inclut les fichiers nécessaires pour établir une connexion avec la base de données 
-require('model/config/util.php');  // et inclure des fonctions utilitaires.
+require('model/config/database.php');
+require('model/config/util.php');
 $page = "Utilisateur";
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_user'])) { //Vérifie si un formulaire a été soumis en méthode POST et si le bouton update_user a été cliqué.
-    // Récupérer et sécurise les données du formulaire
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_user'])) {
+    // Récupérer et sécuriser les données du formulaire
     $id_utilisateur = $_POST['id_utilisateur'];
     $nom = htmlspecialchars($_POST['nom']);
     $adresse = htmlspecialchars($_POST['adresse']);
     $telephone = htmlspecialchars($_POST['telephone']);
     
-    // Exécute une requête SQL pour mettre à jour les informations de l’utilisateur dans la base de données sans modifier l'email et le mot de passe.
+    // Mise à jour de l'utilisateur dans la base de données
     $stmt = $bdd->prepare("UPDATE utilisateur SET nom = :nom, adresse = :adresse, telephone = :telephone WHERE id_utilisateur = :id_utilisateur");
     $stmt->execute([
         ':nom' => $nom,
@@ -18,10 +18,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_user'])) { //V
         ':telephone' => $telephone,
         ':id_utilisateur' => $id_utilisateur
     ]);
-    //Affiche une alerte JavaScript indiquant que la mise à jour a été réussie.
     echo "<script>alert('Mise à jour réussie !');</script>";
 }
-    //  Exécute une requête SQL pour récupérer tous les utilisateurs avec leurs informations.
+
 $users = $bdd->query("SELECT id_utilisateur, nom, email, telephone, adresse, mot_de_passe FROM utilisateur")->fetchAll();
 ?>
 
@@ -60,7 +59,8 @@ $users = $bdd->query("SELECT id_utilisateur, nom, email, telephone, adresse, mot
                                                 <td><?= htmlspecialchars($user['telephone']) ?></td>
                                                 <td><?= htmlspecialchars($user['adresse']) ?></td>
                                                 <td>
-                                                    <button class="btn btn-warning" onclick="showEditModal('<?= $user['id_utilisateur'] ?>', '<?= $user['nom'] ?>', '<?= $user['email'] ?>', '<?= $user['mot_de_passe'] ?>', '<?= $user['telephone'] ?>', '<?= $user['adresse'] ?>')">Modifier</button>
+                                                    <!-- Echappement des guillemets dans les variables PHP -->
+                                                    <button class="btn btn-warning" onclick="showEditModal('<?= addslashes($user['id_utilisateur']) ?>', '<?= addslashes($user['nom']) ?>', '<?= addslashes($user['email']) ?>', '<?= addslashes($user['mot_de_passe']) ?>', '<?= addslashes($user['telephone']) ?>', '<?= addslashes($user['adresse']) ?>')">Modifier</button>
                                                 </td>
                                             </tr>
                                         <?php endforeach; ?>
