@@ -30,7 +30,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_user'])) {
     }
 }
 
-$users = $bdd->query("SELECT id_utilisateur, nom, email, telephone, adresse, mot_de_passe FROM utilisateur")->fetchAll();
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_user'])) {
+    $nom = htmlspecialchars($_POST['nom']);
+    $email = htmlspecialchars($_POST['email']);
+    $telephone = htmlspecialchars($_POST['telephone']);
+    $adresse = htmlspecialchars($_POST['adresse']);
+    $mot_de_passe = password_hash($_POST['mot_de_passe'], PASSWORD_DEFAULT);
+
+    $stmt = $bdd->prepare("INSERT INTO utilisateur (nom, email, telephone, adresse, mot_de_passe) VALUES (:nom, :email, :telephone, :adresse, :mot_de_passe)");
+    $stmt->execute([
+        ':nom' => $nom,
+        ':email' => $email,
+        ':telephone' => $telephone,
+        ':adresse' => $adresse,
+        ':mot_de_passe' => $mot_de_passe
+    ]);
+    echo "<script>alert('Utilisateur ajouté avec succès !');</script>";
+}
+
+$users = $bdd->query("SELECT id_utilisateur, nom, email, telephone, adresse FROM utilisateur")->fetchAll();
 ?>
 
 <!DOCTYPE html>
@@ -50,7 +68,9 @@ $users = $bdd->query("SELECT id_utilisateur, nom, email, telephone, adresse, mot
                     <div class="container-fluid flex-grow-1 container-p-y">
                         <div class="d-flex justify-content-between align-items-center mb-4">
                             <h4 class="fw-bold py-3 mb-0">Utilisateurs</h4>
-                            <a href="Formulaire.php" class="btn btn-primary"><i class="fas fa-plus"></i> Ajouter</a>
+                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addUserModal">
+                                <i class="fas fa-plus"></i> Ajouter
+                            </button>
                         </div>
                         <div class="card">
                             <div class="table-responsive text-nowrap">
@@ -72,7 +92,7 @@ $users = $bdd->query("SELECT id_utilisateur, nom, email, telephone, adresse, mot
                                                 <td><?= htmlspecialchars($user['telephone']) ?></td>
                                                 <td><?= htmlspecialchars($user['adresse']) ?></td>
                                                 <td>
-                                                    <a href="#" onclick="showEditModal('<?= addslashes($user['id_utilisateur']) ?>', '<?= addslashes($user['nom']) ?>', '<?= addslashes($user['email']) ?>', '<?= addslashes($user['mot_de_passe']) ?>', '<?= addslashes($user['telephone']) ?>', '<?= addslashes($user['adresse']) ?>')" class="text-warning me-2">
+                                                    <a href="#" onclick="showEditModal('<?= addslashes($user['id_utilisateur']) ?>', '<?= addslashes($user['nom']) ?>', '<?= addslashes($user['email']) ?>', '<?= addslashes($user['telephone']) ?>', '<?= addslashes($user['adresse']) ?>')" class="text-warning me-2">
                                                         <i class="fas fa-edit"></i>
                                                     </a>
                                                     <form action="utilisateur.php" method="POST" style="display:inline;">
@@ -94,26 +114,26 @@ $users = $bdd->query("SELECT id_utilisateur, nom, email, telephone, adresse, mot
         </div>
     </div>
 
-    <div class="modal fade" id="editUserModal" tabindex="-1" aria-hidden="true">
-        <form class="modal-dialog modal-dialog-centered" role="document" method="POST">
+    <!-- Modal d'ajout d'utilisateur -->
+    <div class="modal fade" id="addUserModal" tabindex="-1" aria-hidden="true">
+        <form class="modal-dialog modal-dialog-centered" method="POST">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Modifier l'utilisateur</h5>
+                    <h5 class="modal-title">Ajouter un utilisateur</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <input type="hidden" id="id_utilisateur" name="id_utilisateur">
                     <div class="mb-3">
                         <label for="nom" class="form-label">Nom</label>
                         <input type="text" class="form-control" id="nom" name="nom" required>
                     </div>
                     <div class="mb-3">
                         <label for="email" class="form-label">Email</label>
-                        <input type="email" class="form-control" id="email" name="email" readonly>
+                        <input type="email" class="form-control" id="email" name="email" required>
                     </div>
                     <div class="mb-3">
-                        <label for="password" class="form-label">Mot de passe</label>
-                        <input type="text" class="form-control" id="password" name="password" readonly>
+                        <label for="mot_de_passe" class="form-label">Mot de passe</label>
+                        <input type="password" class="form-control" id="mot_de_passe" name="mot_de_passe" required>
                     </div>
                     <div class="mb-3">
                         <label for="telephone" class="form-label">Téléphone</label>
@@ -126,7 +146,7 @@ $users = $bdd->query("SELECT id_utilisateur, nom, email, telephone, adresse, mot
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
-                    <button class="btn btn-primary" type="submit" name="update_user">Enregistrer</button>
+                    <button class="btn btn-primary" type="submit" name="add_user">Ajouter</button>
                 </div>
             </div>
         </form>
@@ -134,11 +154,10 @@ $users = $bdd->query("SELECT id_utilisateur, nom, email, telephone, adresse, mot
 
     <?php include "include/common/script.php"; ?>
     <script>
-        function showEditModal(id, nom, email, password, telephone, adresse) {
+        function showEditModal(id, nom, email, telephone, adresse) {
             document.getElementById('id_utilisateur').value = id;
             document.getElementById('nom').value = nom;
             document.getElementById('email').value = email;
-            document.getElementById('password').value = password;
             document.getElementById('telephone').value = telephone;
             document.getElementById('adresse').value = adresse;
             var modal = new bootstrap.Modal(document.getElementById('editUserModal'));
