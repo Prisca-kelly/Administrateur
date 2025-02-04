@@ -66,6 +66,7 @@ $destinations = $bdd->query("SELECT id_destination, nom, description, image FROM
 <head>
     <?php include "include/common/head.php"; ?>
     <title><?= $page ?></title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 </head>
 
 <body>
@@ -119,10 +120,12 @@ $destinations = $bdd->query("SELECT id_destination, nom, description, image FROM
                                         <td><?= htmlspecialchars($destination['description']) ?></td>
                                         <td><img src="uploads/<?= htmlspecialchars($destination['image']) ?>" width="80" height="60" alt="Image de destination"></td>
                                         <td>
-                                            <!-- Option de suppression de la destination -->
+                                            <!-- Icône de suppression -->
                                             <form action="destination.php" method="post" style="display:inline;">
                                                 <input type="hidden" name="delete_id" value="<?= htmlspecialchars($destination['id_destination']) ?>">
-                                                <button type="submit" name="supprimer" class="btn btn-danger">Supprimer</button>
+                                                <button type="submit" name="supprimer" class="btn btn-link text-danger" style="border: none; background: none;">
+                                                    <i class="fa-solid fa-trash"></i>
+                                                </button>
                                             </form>
                                         </td>
                                     </tr>

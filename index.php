@@ -1,26 +1,40 @@
 <?php
-require('model/config/database.php'); // Inclure la connexion
-require('model/config/util.php');
+require('model/config/database.php'); // Inclure la connexion à la base de données
+require('model/config/util.php'); // Fichier utilitaire
+
+// Mode debug (afficher les erreurs si besoin)
+$debug = false;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Récupérer et assainir les données du formulaire
     $email = filter_var($_POST['email'], FILTER_SANITIZE_EMAIL);
-    $password = sha1($_POST['password']); // Le mot de passe est déjà dans son état brut
+    $password = $_POST['password']; // On récupère le mot de passe en clair
 
-    // Vérification dans la base de données
-    $stmt = $bdd->prepare("SELECT * FROM utilisateur WHERE email = :email AND mot_de_passe = :password");
-    $stmt->execute([':email' => $email, 'password' => $password]);
-
-    if ($stmt->rowCount() == 1) {
+    try {
+        // Vérifier si l'utilisateur existe
+        $stmt = $bdd->prepare("SELECT * FROM utilisateur WHERE email = :email");
+        $stmt->execute([':email' => $email]);
         $user = $stmt->fetch();
 
-        // Initialiser la session et rediriger l'utilisateur
-        init_session();
-        $_SESSION["id"] = $user["id_utilisateur"];
-        header("Location: accueil.php");
-        exit; // Toujours appeler exit après un header pour éviter toute exécution supplémentaire
-    } else {
-        echo "<script>alert('Email ou mot de passe incorrect');</script>";
+        if ($user) {
+            // Vérifier le mot de passe
+            if (password_verify($password, $user['mot_de_passe'])) { // Si les mots de passe sont hachés avec password_hash()
+                init_session();
+                $_SESSION["id"] = $user["id_utilisateur"];
+                header("Location: accueil.php");
+                exit; 
+            } else {
+                echo "<script>alert('Email ou mot de passe incorrect');</script>";
+            }
+        } else {
+            echo "<script>alert('Email ou mot de passe incorrect');</script>";
+        }
+    } catch (PDOException $e) {
+        if ($debug) {
+            die("Erreur de connexion : " . $e->getMessage());
+        } else {
+            echo "<script>alert('Une erreur est survenue. Veuillez réessayer plus tard.');</script>";
+        }
     }
 }
 ?>
@@ -39,15 +53,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div class="container-xxl">
         <div class="authentication-wrapper authentication-basic container-p-y">
             <div class="authentication-inner">
-                <!-- Register -->
+                <!-- Connexion -->
                 <div class="card">
                     <div class="card-body">
                         <!-- Logo -->
                         <div class="app-brand justify-content-center">
                             <a href="accueil.php" class="app-brand-link gap-2">
-                                <span class="app-brand-logo demo">
-
-                                </span>
                                 <span class="app-brand-text demo text-body fw-bolder">A-S Financial</span>
                             </a>
                         </div>
@@ -59,7 +70,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <div class="mb-3">
                                 <label for="email" class="form-label">Email</label>
                                 <input type="text" class="form-control" id="email" name="email"
-                                    placeholder="Entrez votre adresse e-mail" autofocus />
+                                    placeholder="Entrez votre adresse e-mail" autofocus required />
                             </div>
                             <div class="mb-3 form-password-toggle">
                                 <div class="d-flex justify-content-between">
@@ -71,7 +82,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 <div class="input-group input-group-merge">
                                     <input type="password" id="password" class="form-control" name="password"
                                         placeholder="&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;"
-                                        aria-describedby="password" />
+                                        required />
                                     <span class="input-group-text cursor-pointer"><i class="bx bx-hide"></i></span>
                                 </div>
                             </div>
@@ -95,7 +106,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         </p>
                     </div>
                 </div>
-                <!-- /Register -->
+                <!-- /Connexion -->
             </div>
         </div>
     </div>

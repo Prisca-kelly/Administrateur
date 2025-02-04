@@ -4,13 +4,11 @@ require('model/config/util.php');
 $page = "Utilisateur";
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_user'])) {
-    // Récupérer et sécuriser les données du formulaire
     $id_utilisateur = $_POST['id_utilisateur'];
     $nom = htmlspecialchars($_POST['nom']);
     $adresse = htmlspecialchars($_POST['adresse']);
     $telephone = htmlspecialchars($_POST['telephone']);
     
-    // Mise à jour de l'utilisateur dans la base de données
     $stmt = $bdd->prepare("UPDATE utilisateur SET nom = :nom, adresse = :adresse, telephone = :telephone WHERE id_utilisateur = :id_utilisateur");
     $stmt->execute([
         ':nom' => $nom,
@@ -21,7 +19,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_user'])) {
     echo "<script>alert('Mise à jour réussie !');</script>";
 }
 
-// Suppression d'un utilisateur
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_user'])) {
     $id_utilisateur = $_POST['delete_user'];
     try {
@@ -41,6 +38,7 @@ $users = $bdd->query("SELECT id_utilisateur, nom, email, telephone, adresse, mot
 <head>
     <?php include "include/common/head.php"; ?>
     <title><?= $page ?></title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
     <div class="layout-wrapper layout-content-navbar">
@@ -50,7 +48,10 @@ $users = $bdd->query("SELECT id_utilisateur, nom, email, telephone, adresse, mot
                 <?php include "include/common/navbar.php"; ?>
                 <div class="content-wrapper">
                     <div class="container-fluid flex-grow-1 container-p-y">
-                        <h4 class="fw-bold py-3 mb-4">Utilisateurs</h4>
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h4 class="fw-bold py-3 mb-0">Utilisateurs</h4>
+                            <a href="Formulaire.php" class="btn btn-primary"><i class="fas fa-plus"></i> Ajouter</a>
+                        </div>
                         <div class="card">
                             <div class="table-responsive text-nowrap">
                                 <table class="table">
@@ -71,12 +72,14 @@ $users = $bdd->query("SELECT id_utilisateur, nom, email, telephone, adresse, mot
                                                 <td><?= htmlspecialchars($user['telephone']) ?></td>
                                                 <td><?= htmlspecialchars($user['adresse']) ?></td>
                                                 <td>
-                                                    <button class="btn btn-warning" onclick="showEditModal('<?= addslashes($user['id_utilisateur']) ?>', '<?= addslashes($user['nom']) ?>', '<?= addslashes($user['email']) ?>', '<?= addslashes($user['mot_de_passe']) ?>', '<?= addslashes($user['telephone']) ?>', '<?= addslashes($user['adresse']) ?>')">Modifier</button>
-                                                    
-                                                    <!-- Formulaire de suppression -->
+                                                    <a href="#" onclick="showEditModal('<?= addslashes($user['id_utilisateur']) ?>', '<?= addslashes($user['nom']) ?>', '<?= addslashes($user['email']) ?>', '<?= addslashes($user['mot_de_passe']) ?>', '<?= addslashes($user['telephone']) ?>', '<?= addslashes($user['adresse']) ?>')" class="text-warning me-2">
+                                                        <i class="fas fa-edit"></i>
+                                                    </a>
                                                     <form action="utilisateur.php" method="POST" style="display:inline;">
                                                         <input type="hidden" name="delete_user" value="<?= $user['id_utilisateur'] ?>">
-                                                        <button type="submit" class="btn btn-danger" onclick="return confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ?')">Supprimer</button>
+                                                        <button type="submit" class="btn btn-link text-danger" onclick="return confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ?')">
+                                                            <i class="fas fa-trash-alt"></i>
+                                                        </button>
                                                     </form>
                                                 </td>
                                             </tr>
