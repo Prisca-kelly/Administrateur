@@ -1,31 +1,25 @@
 <?php
 require('model/config/database.php'); // Inclure la connexion à la base de données
 require('model/config/util.php'); // Fichier utilitaire
-
-// Mode debug (afficher les erreurs si besoin)
+include './model/config/checkAdmin.php';
 $debug = false;
+
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Récupérer et assainir les données du formulaire
-    $email = filter_var($_POST['email'], FILTER_SANITIZE_EMAIL);
-    $password = $_POST['password']; // On récupère le mot de passe en clair
+    $email = $_POST['email'];
+    $password = sha1($_POST['password']); // On récupère le mot de passe en clair
 
     try {
         // Vérifier si l'utilisateur existe
-        $stmt = $bdd->prepare("SELECT * FROM utilisateur WHERE email = :email");
-        $stmt->execute([':email' => $email]);
-        $user = $stmt->fetch();
-
-        if ($user) {
-            // Vérifier le mot de passe
-            if (password_verify($password, $user['mot_de_passe'])) { // Si les mots de passe sont hachés avec password_hash()
-                init_session();
-                $_SESSION["id"] = $user["id_utilisateur"];
-                header("Location: accueil.php");
-                exit; 
-            } else {
-                echo "<script>alert('Email ou mot de passe incorrect');</script>";
-            }
+        $stmt = $bdd->prepare("SELECT * FROM utilisateur WHERE email = ? AND mot_de_passe = ?");
+        $stmt->execute(array($email, $password));
+        if ($stmt->rowCount() == 1) {
+            $user = $stmt->fetch();
+            init_session();
+            $_SESSION["id"] = $user["id_utilisateur"];
+            header("Location: accueil.php");
+            exit;
         } else {
             echo "<script>alert('Email ou mot de passe incorrect');</script>";
         }
