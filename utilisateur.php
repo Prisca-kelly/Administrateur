@@ -1,4 +1,4 @@
-<?php 
+<?php
 require('model/config/database.php');
 require('model/config/util.php');
 $page = "Utilisateur";
@@ -8,7 +8,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_user'])) {
     $nom = htmlspecialchars($_POST['nom']);
     $adresse = htmlspecialchars($_POST['adresse']);
     $telephone = htmlspecialchars($_POST['telephone']);
-    
+
     $stmt = $bdd->prepare("UPDATE utilisateur SET nom = :nom, adresse = :adresse, telephone = :telephone WHERE id_utilisateur = :id_utilisateur");
     $stmt->execute([
         ':nom' => $nom,
@@ -53,11 +53,13 @@ $users = $bdd->query("SELECT id_utilisateur, nom, email, telephone, adresse FROM
 
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
     <?php include "include/common/head.php"; ?>
     <title><?= $page ?></title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
+
 <body>
     <div class="layout-wrapper layout-content-navbar">
         <div class="layout-container">
@@ -92,12 +94,16 @@ $users = $bdd->query("SELECT id_utilisateur, nom, email, telephone, adresse FROM
                                                 <td><?= htmlspecialchars($user['telephone']) ?></td>
                                                 <td><?= htmlspecialchars($user['adresse']) ?></td>
                                                 <td>
-                                                    <a href="#" onclick="showEditModal('<?= addslashes($user['id_utilisateur']) ?>', '<?= addslashes($user['nom']) ?>', '<?= addslashes($user['email']) ?>', '<?= addslashes($user['telephone']) ?>', '<?= addslashes($user['adresse']) ?>')" class="text-warning me-2">
+                                                    <a href="#"
+                                                        onclick="showEditModal('<?= $user['id_utilisateur'] ?>', '<?= $user['nom'] ?>', '<?= $user['email'] ?>', '<?= $user['telephone'] ?>', '<?= $user['adresse'] ?>')"
+                                                        class="text-warning me-2">
                                                         <i class="fas fa-edit"></i>
                                                     </a>
                                                     <form action="utilisateur.php" method="POST" style="display:inline;">
-                                                        <input type="hidden" name="delete_user" value="<?= $user['id_utilisateur'] ?>">
-                                                        <button type="submit" class="btn btn-link text-danger" onclick="return confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ?')">
+                                                        <input type="hidden" name="delete_user"
+                                                            value="<?= $user['id_utilisateur'] ?>">
+                                                        <button type="submit" class="btn btn-link text-danger"
+                                                            onclick="return confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ?')">
                                                             <i class="fas fa-trash-alt"></i>
                                                         </button>
                                                     </form>
@@ -152,17 +158,53 @@ $users = $bdd->query("SELECT id_utilisateur, nom, email, telephone, adresse FROM
         </form>
     </div>
 
+    <!-- Modal de modification d'utilisateur -->
+    <div class="modal fade" id="updateUserModal" tabindex="-1" aria-hidden="true">
+        <form class="modal-dialog modal-dialog-centered" method="POST">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Ajouter un utilisateur</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="uNom" class="form-label">Nom</label>
+                        <input type="text" class="form-control" id="uNom" name="nom" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="uEmail" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="uEmail" disabled>
+                    </div>
+                    <div class="mb-3">
+                        <label for="uTelephone" class="form-label">Téléphone</label>
+                        <input type="tel" class="form-control" id="uTelephone" name="telephone" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="uAdresse" class="form-label">Adresse</label>
+                        <input type="text" class="form-control" id="uAdresse" name="adresse" required>
+                    </div>
+                </div>
+                <input type="number" id="id_utilisateur" name="id_utilisateur" hidden>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button class="btn btn-primary" type="submit" name="update_user">Ajouter</button>
+                </div>
+            </div>
+        </form>
+    </div>
+
     <?php include "include/common/script.php"; ?>
     <script>
         function showEditModal(id, nom, email, telephone, adresse) {
             document.getElementById('id_utilisateur').value = id;
-            document.getElementById('nom').value = nom;
-            document.getElementById('email').value = email;
-            document.getElementById('telephone').value = telephone;
-            document.getElementById('adresse').value = adresse;
-            var modal = new bootstrap.Modal(document.getElementById('editUserModal'));
+            document.getElementById('uNom').value = nom;
+            document.getElementById('uEmail').value = email;
+            document.getElementById('uTelephone').value = telephone;
+            document.getElementById('uAdresse').value = adresse;
+            var modal = new bootstrap.Modal(document.getElementById('updateUserModal'));
             modal.show();
         }
     </script>
 </body>
+
 </html>
