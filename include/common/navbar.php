@@ -47,7 +47,7 @@
                         </a>
                     </li>
                     <li>
-                        <a class="dropdown-item" href="index.php">
+                        <a class="dropdown-item" href="deconnexion.php">
                             <i class="bx bx-power-off me-2"></i>
                             <span class="align-middle">Déconnexion</span>
                         </a>
