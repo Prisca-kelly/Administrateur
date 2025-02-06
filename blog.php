@@ -1,4 +1,4 @@
-<?php  
+<?php
 require('model/config/database.php');
 require('model/config/util.php');
 $page = "blog";
@@ -12,6 +12,10 @@ if (isset($_POST["ajouter"])) { //Vérifie si le formulaire a été soumis en cl
         // Gestion de l'upload d'image
         $image = $_FILES["image"]["name"];
         $target_dir = "uploads/";
+        $target_dir = "uploads/";
+        if (!file_exists($target_dir)) {
+            mkdir($target_dir, 0777, true);
+        }
         $target_file = $target_dir . basename($image);
 
         if (move_uploaded_file($_FILES["image"]["tmp_name"], $target_file)) {
@@ -67,11 +71,13 @@ if (isset($_POST['modifier'])) {
 
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
     <?php include "include/common/head.php"; ?>
     <title><?= $page ?></title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 </head>
+
 <body>
     <div class="layout-wrapper layout-content-navbar">
         <div class="layout-container">
@@ -104,49 +110,69 @@ if (isset($_POST['modifier'])) {
                                             <tr>
                                                 <td><?= htmlspecialchars($article['titre']) ?></td>
                                                 <td><?= htmlspecialchars(substr($article['contenu'], 0, 100)) ?>...</td>
-                                                <td><img src="uploads/<?= htmlspecialchars($article['image']) ?>" width="80" height="60"></td>
+                                                <td><img src="uploads/<?= htmlspecialchars($article['image']) ?>" width="80"
+                                                        height="60"></td>
                                                 <td>
                                                     <!-- Bouton Modifier -->
-                                                    <button class="btn btn-no-style mx-2" data-bs-toggle="modal" data-bs-target="#editBlogModal<?= $article['id_article'] ?>">
-                                                    <i class="fa-solid fa-pen-to-square"></i>
+                                                    <button class="btn btn-no-style mx-2" data-bs-toggle="modal"
+                                                        data-bs-target="#editBlogModal<?= $article['id_article'] ?>">
+                                                        <i class="fa-solid fa-pen-to-square"></i>
                                                     </button>
 
                                                     <!-- Bouton Supprimer -->
-                                                    <a href="delete_article.php?id=<?= $article['id_article'] ?>" class="text-danger mx-2" onclick="return confirm('Êtes-vous sûr de vouloir supprimer cet article ?');">
+                                                    <a href="delete_article.php?id=<?= $article['id_article'] ?>"
+                                                        class="text-danger mx-2"
+                                                        onclick="return confirm('Êtes-vous sûr de vouloir supprimer cet article ?');">
                                                         <i class="fa-solid fa-trash"></i>
                                                     </a>
                                                 </td>
                                             </tr>
 
                                             <!-- Modal Modifier Article -->
-                                            <div class="modal fade" id="editBlogModal<?= $article['id_article'] ?>" tabindex="-1" aria-labelledby="editBlogModalLabel<?= $article['id_article'] ?>" aria-hidden="true">
+                                            <div class="modal fade" id="editBlogModal<?= $article['id_article'] ?>"
+                                                tabindex="-1"
+                                                aria-labelledby="editBlogModalLabel<?= $article['id_article'] ?>"
+                                                aria-hidden="true">
                                                 <div class="modal-dialog">
                                                     <div class="modal-content">
                                                         <div class="modal-header">
-                                                            <h5 class="modal-title" id="editBlogModalLabel<?= $article['id_article'] ?>">Modifier l'article</h5>
-                                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                            <h5 class="modal-title"
+                                                                id="editBlogModalLabel<?= $article['id_article'] ?>">
+                                                                Modifier l'article</h5>
+                                                            <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                                                aria-label="Close"></button>
                                                         </div>
                                                         <div class="modal-body">
-                                                            <form action="blog.php" method="post" enctype="multipart/form-data">
-                                                                <input type="hidden" name="id_article" value="<?= $article['id_article'] ?>">
-                                                                <input type="hidden" name="image_old" value="<?= $article['image'] ?>">
+                                                            <form action="blog.php" method="post"
+                                                                enctype="multipart/form-data">
+                                                                <input type="hidden" name="id_article"
+                                                                    value="<?= $article['id_article'] ?>">
+                                                                <input type="hidden" name="image_old"
+                                                                    value="<?= $article['image'] ?>">
 
                                                                 <div class="mb-3">
                                                                     <label class="form-label">Titre</label>
-                                                                    <input type="text" class="form-control" name="titre" value="<?= htmlspecialchars($article['titre']) ?>" required>
+                                                                    <input type="text" class="form-control" name="titre"
+                                                                        value="<?= htmlspecialchars($article['titre']) ?>"
+                                                                        required>
                                                                 </div>
                                                                 <div class="mb-3">
                                                                     <label class="form-label">Contenu</label>
-                                                                    <textarea class="form-control" name="contenu" required><?= htmlspecialchars($article['contenu']) ?></textarea>
+                                                                    <textarea class="form-control" name="contenu"
+                                                                        required><?= htmlspecialchars($article['contenu']) ?></textarea>
                                                                 </div>
                                                                 <div class="mb-3">
                                                                     <label class="form-label">Image</label>
-                                                                    <input type="file" class="form-control" name="image" accept="image/*">
-                                                                    <img src="uploads/<?= htmlspecialchars($article['image']) ?>" width="80" height="60" class="mt-2">
+                                                                    <input type="file" class="form-control" name="image"
+                                                                        accept="image/*">
+                                                                    <img src="uploads/<?= htmlspecialchars($article['image']) ?>"
+                                                                        width="80" height="60" class="mt-2">
                                                                 </div>
                                                                 <div class="modal-footer">
-                                                                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
-                                                                    <button class="btn btn-primary" type="submit" name="modifier">Enregistrer</button>
+                                                                    <button type="button" class="btn btn-outline-secondary"
+                                                                        data-bs-dismiss="modal">Annuler</button>
+                                                                    <button class="btn btn-primary" type="submit"
+                                                                        name="modifier">Enregistrer</button>
                                                                 </div>
                                                             </form>
                                                         </div>
@@ -187,7 +213,8 @@ if (isset($_POST['modifier'])) {
                             <input type="file" class="form-control" name="image" accept="image/*" required>
                         </div>
                         <div class="modal-footer">
-                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
+                            <button type="button" class="btn btn-outline-secondary"
+                                data-bs-dismiss="modal">Annuler</button>
                             <button class="btn btn-primary" type="submit" name="ajouter">Enregistrer</button>
                         </div>
                     </form>
@@ -199,4 +226,5 @@ if (isset($_POST['modifier'])) {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/js/all.min.js"></script>
     <?php include "include/common/script.php"; ?>
 </body>
+
 </html>
