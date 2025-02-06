@@ -16,7 +16,7 @@ if (isset($_POST["ajouter"])) {
 
         if (move_uploaded_file($_FILES["image"]["tmp_name"], $target_file)) {
             try {
-                $sql = "INSERT INTO destination (nom, description, image) VALUES (:nom, :description, :image)";
+                $sql = "INSERT INTO destination (nom, description, image, statut) VALUES (:nom, :description, :image, 1)";
                 $stmt = $bdd->prepare($sql);
                 $stmt->execute([
                     ':nom' => $nom,
@@ -36,21 +36,59 @@ if (isset($_POST["ajouter"])) {
     }
 }
 
-// Suppression d'une destination
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST["supprimer"])) {
-    $id_destination = $_POST["delete_id"];
+// Changer le statut d'une destination
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST["toggle_statut"])) {
+    $id_destination = $_POST["toggle_id"];
 
     try {
-        $stmt = $bdd->prepare("DELETE FROM destination WHERE id_destination = :id_destination");
+        $stmt = $bdd->prepare("UPDATE destination SET statut = NOT statut WHERE id_destination = :id_destination");
         $stmt->execute([':id_destination' => $id_destination]);
-        echo "<script>alert('✅ Destination supprimée avec succès.'); window.location.href='destination.php';</script>";
+        echo "<script>window.location.href='destination.php';</script>";
     } catch (PDOException $e) {
-        echo "<script>alert('❌ Erreur lors de la suppression : " . $e->getMessage() . "');</script>";
+        echo "<script>alert('❌ Erreur lors de la mise à jour du statut : " . $e->getMessage() . "');</script>";
+    }
+}
+
+// Modifier une destination
+if (isset($_POST["modifier"])) {
+    if (!empty($_POST["nom"]) && !empty($_POST["description"])) {
+        $id_destination = $_POST["edit_id"];
+        $nom = htmlspecialchars($_POST["nom"]);
+        $description = htmlspecialchars($_POST["description"]);
+        $image = $_FILES["image"]["name"];
+
+        // Si une nouvelle image est téléchargée
+        if (!empty($image)) {
+            $target_dir = "uploads/";
+            $target_file = $target_dir . basename($image);
+            move_uploaded_file($_FILES["image"]["tmp_name"], $target_file);
+        } else {
+            // Si l'image n'a pas changé, conserver l'ancienne image
+            $stmt = $bdd->prepare("SELECT image FROM destination WHERE id_destination = :id_destination");
+            $stmt->execute([':id_destination' => $id_destination]);
+            $image = $stmt->fetchColumn();
+        }
+
+        try {
+            $sql = "UPDATE destination SET nom = :nom, description = :description, image = :image WHERE id_destination = :id_destination";
+            $stmt = $bdd->prepare($sql);
+            $stmt->execute([
+                ':id_destination' => $id_destination,
+                ':nom' => $nom,
+                ':description' => $description,
+                ':image' => $image
+            ]);
+            echo "<script>alert('✅ Destination modifiée avec succès.'); window.location.href='destination.php';</script>";
+        } catch (PDOException $e) {
+            echo "<script>alert('❌ Erreur lors de la modification : " . $e->getMessage() . "');</script>";
+        }
+    } else {
+        echo "<script>alert('❌ Veuillez remplir tous les champs.');</script>";
     }
 }
 
 // Récupération des destinations
-$destinations = $bdd->query("SELECT id_destination, nom, description, image FROM destination")->fetchAll();
+$destinations = $bdd->query("SELECT id_destination, nom, description, image, statut FROM destination")->fetchAll();
 ?>
 
 <!DOCTYPE html>
@@ -95,11 +133,14 @@ $destinations = $bdd->query("SELECT id_destination, nom, description, image FROM
                                                 <td><img src="uploads/<?= htmlspecialchars($destination['image']) ?>" width="80" height="60"></td>
                                                 <td>
                                                     <form action="destination.php" method="post" style="display:inline;">
-                                                        <input type="hidden" name="delete_id" value="<?= $destination['id_destination'] ?>">
-                                                        <button type="submit" name="supprimer" class="btn btn-link text-danger" onclick="return confirm('Êtes-vous sûr de vouloir supprimer cette destination ?')">
-                                                            <i class="fa-solid fa-trash"></i>
+                                                        <input type="hidden" name="toggle_id" value="<?= $destination['id_destination'] ?>">
+                                                        <button type="submit" name="toggle_statut" class="btn btn-link text-warning">
+                                                            <i class="fa-solid <?= $destination['statut'] ? 'fa-lock-open' : 'fa-lock' ?>"></i>
                                                         </button>
                                                     </form>
+                                                    <button class="btn btn-link text-info" data-bs-toggle="modal" data-bs-target="#editDestinationModal" data-id="<?= $destination['id_destination'] ?>" data-nom="<?= htmlspecialchars($destination['nom']) ?>" data-description="<?= htmlspecialchars($destination['description']) ?>" data-image="<?= htmlspecialchars($destination['image']) ?>">
+                                                        <i class="fas fa-edit"></i>
+                                                    </button>
                                                 </td>
                                             </tr>
                                         <?php endforeach; ?>
@@ -112,6 +153,80 @@ $destinations = $bdd->query("SELECT id_destination, nom, description, image FROM
             </div>
         </div>
     </div>
+
+    <!-- Modal pour ajouter une destination -->
+    <div class="modal fade" id="addDestinationModal" tabindex="-1" aria-labelledby="addDestinationModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addDestinationModalLabel">Ajouter une destination</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form action="destination.php" method="post" enctype="multipart/form-data">
+                        <div class="mb-3">
+                            <label for="nom" class="form-label">Nom</label>
+                            <input type="text" class="form-control" id="nom" name="nom" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Description</label>
+                            <textarea class="form-control" id="description" name="description" rows="3" required></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="image" class="form-label">Image</label>
+                            <input type="file" class="form-control" id="image" name="image" required>
+                        </div>
+                        <button type="submit" name="ajouter" class="btn btn-primary">Ajouter</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal pour modifier une destination -->
+    <div class="modal fade" id="editDestinationModal" tabindex="-1" aria-labelledby="editDestinationModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editDestinationModalLabel">Modifier une destination</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form action="destination.php" method="post" enctype="multipart/form-data">
+                        <input type="hidden" name="edit_id" id="edit_id">
+                        <div class="mb-3">
+                            <label for="edit_nom" class="form-label">Nom</label>
+                            <input type="text" class="form-control" id="edit_nom" name="nom" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="edit_description" class="form-label">Description</label>
+                            <textarea class="form-control" id="edit_description" name="description" rows="3" required></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="edit_image" class="form-label">Image</label>
+                            <input type="file" class="form-control" id="edit_image" name="image">
+                            <small class="form-text text-muted">Laissez vide si vous ne souhaitez pas modifier l'image.</small>
+                        </div>
+                        <button type="submit" name="modifier" class="btn btn-primary">Modifier</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        var editButtons = document.querySelectorAll('button[data-bs-target="#editDestinationModal"]');
+        editButtons.forEach(function(button) {
+            button.addEventListener('click', function() {
+                document.getElementById('edit_id').value = button.getAttribute('data-id');
+                document.getElementById('edit_nom').value = button.getAttribute('data-nom');
+                document.getElementById('edit_description').value = button.getAttribute('data-description');
+            });
+        });
+    </script>
+</body>
+</html>
+
 
     <!-- Modale d'ajout de destination -->
     <div class="modal fade" id="addDestinationModal" tabindex="-1" aria-hidden="true">

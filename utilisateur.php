@@ -1,8 +1,10 @@
 <?php
-require('model/config/database.php');
-require('model/config/util.php');
-$page = "Utilisateur";
+// inclusion des fichiers
+require('model/config/database.php'); // Gère la connexion à la base de données
+require('model/config/util.php'); // contient des fonctions utilitaires
+$page = "Utilisateur";  // Page actuelle
 
+// Mise à jour des informations d'un utilisateur
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_user'])) {
     $id_utilisateur = $_POST['id_utilisateur'];
     $nom = htmlspecialchars($_POST['nom']);
@@ -18,7 +20,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_user'])) {
     ]);
     echo "<script>alert('Mise à jour réussie !');</script>";
 }
-
+ 
+//Suppression d'un utilisateur
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_user'])) {
     $id_utilisateur = $_POST['delete_user'];
     try {
