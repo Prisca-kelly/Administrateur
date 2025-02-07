@@ -1,7 +1,7 @@
 <?php
 require('model/config/database.php');
 require('model/config/util.php');
-$page = "blog";
+$page = "Blog";
 
 // Ajouter un article
 if (isset($_POST["ajouter"])) { //Vérifie si le formulaire a été soumis en cliquant sur un bouton d'ajout d'article (avec name="ajouter").
@@ -70,7 +70,7 @@ if (isset($_POST['modifier'])) {
 // Supprimer un article
 if (isset($_POST['delete_article'])) {
     $id_article = $_POST['delete_article'];
-    
+
     // Supprimer l'image du dossier uploads
     $image_path = "uploads/" . $_POST['image_old'];
     if (file_exists($image_path)) {

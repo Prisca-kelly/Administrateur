@@ -1,7 +1,7 @@
-<?php  
+<?php
 require('model/config/database.php');
 require('model/config/util.php');
-$page = "destination";
+$page = "Destination";
 
 // Ajouter une destination
 if (isset($_POST["ajouter"])) {
@@ -93,11 +93,13 @@ $destinations = $bdd->query("SELECT id_destination, nom, description, image, sta
 
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
     <?php include "include/common/head.php"; ?>
     <title><?= $page ?></title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 </head>
+
 <body>
     <div class="layout-wrapper layout-content-navbar">
         <div class="layout-container">
@@ -108,11 +110,12 @@ $destinations = $bdd->query("SELECT id_destination, nom, description, image, sta
                     <div class="container-fluid flex-grow-1 container-p-y">
                         <div class="d-flex justify-content-between align-items-center mb-4">
                             <h4 class="fw-bold py-3 mb-0">Destinations</h4>
-                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addDestinationModal">
+                            <button class="btn btn-primary" data-bs-toggle="modal"
+                                data-bs-target="#addDestinationModal">
                                 <i class="fas fa-plus"></i> Ajouter
                             </button>
                         </div>
-                        
+
                         <!-- Tableau des destinations -->
                         <div class="card">
                             <div class="table-responsive text-nowrap">
@@ -130,15 +133,24 @@ $destinations = $bdd->query("SELECT id_destination, nom, description, image, sta
                                             <tr>
                                                 <td><?= htmlspecialchars($destination['nom']) ?></td>
                                                 <td><?= htmlspecialchars($destination['description']) ?></td>
-                                                <td><img src="uploads/<?= htmlspecialchars($destination['image']) ?>" width="80" height="60"></td>
+                                                <td><img src="uploads/<?= htmlspecialchars($destination['image']) ?>"
+                                                        width="80" height="60"></td>
                                                 <td>
                                                     <form action="destination.php" method="post" style="display:inline;">
-                                                        <input type="hidden" name="toggle_id" value="<?= $destination['id_destination'] ?>">
-                                                        <button type="submit" name="toggle_statut" class="btn btn-link text-warning">
-                                                            <i class="fa-solid <?= $destination['statut'] ? 'fa-lock-open' : 'fa-lock' ?>"></i>
+                                                        <input type="hidden" name="toggle_id"
+                                                            value="<?= $destination['id_destination'] ?>">
+                                                        <button type="submit" name="toggle_statut"
+                                                            class="btn btn-link text-warning">
+                                                            <i
+                                                                class="fa-solid <?= $destination['statut'] ? 'fa-lock-open' : 'fa-lock' ?>"></i>
                                                         </button>
                                                     </form>
-                                                    <button class="btn btn-link text-info" data-bs-toggle="modal" data-bs-target="#editDestinationModal" data-id="<?= $destination['id_destination'] ?>" data-nom="<?= htmlspecialchars($destination['nom']) ?>" data-description="<?= htmlspecialchars($destination['description']) ?>" data-image="<?= htmlspecialchars($destination['image']) ?>">
+                                                    <button class="btn btn-link text-info" data-bs-toggle="modal"
+                                                        data-bs-target="#editDestinationModal"
+                                                        data-id="<?= $destination['id_destination'] ?>"
+                                                        data-nom="<?= htmlspecialchars($destination['nom']) ?>"
+                                                        data-description="<?= htmlspecialchars($destination['description']) ?>"
+                                                        data-image="<?= htmlspecialchars($destination['image']) ?>">
                                                         <i class="fas fa-edit"></i>
                                                     </button>
                                                 </td>
@@ -155,7 +167,8 @@ $destinations = $bdd->query("SELECT id_destination, nom, description, image, sta
     </div>
 
     <!-- Modal pour ajouter une destination -->
-    <div class="modal fade" id="addDestinationModal" tabindex="-1" aria-labelledby="addDestinationModalLabel" aria-hidden="true">
+    <div class="modal fade" id="addDestinationModal" tabindex="-1" aria-labelledby="addDestinationModalLabel"
+        aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
@@ -170,7 +183,8 @@ $destinations = $bdd->query("SELECT id_destination, nom, description, image, sta
                         </div>
                         <div class="mb-3">
                             <label for="description" class="form-label">Description</label>
-                            <textarea class="form-control" id="description" name="description" rows="3" required></textarea>
+                            <textarea class="form-control" id="description" name="description" rows="3"
+                                required></textarea>
                         </div>
                         <div class="mb-3">
                             <label for="image" class="form-label">Image</label>
@@ -184,7 +198,8 @@ $destinations = $bdd->query("SELECT id_destination, nom, description, image, sta
     </div>
 
     <!-- Modal pour modifier une destination -->
-    <div class="modal fade" id="editDestinationModal" tabindex="-1" aria-labelledby="editDestinationModalLabel" aria-hidden="true">
+    <div class="modal fade" id="editDestinationModal" tabindex="-1" aria-labelledby="editDestinationModalLabel"
+        aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
@@ -200,12 +215,14 @@ $destinations = $bdd->query("SELECT id_destination, nom, description, image, sta
                         </div>
                         <div class="mb-3">
                             <label for="edit_description" class="form-label">Description</label>
-                            <textarea class="form-control" id="edit_description" name="description" rows="3" required></textarea>
+                            <textarea class="form-control" id="edit_description" name="description" rows="3"
+                                required></textarea>
                         </div>
                         <div class="mb-3">
                             <label for="edit_image" class="form-label">Image</label>
                             <input type="file" class="form-control" id="edit_image" name="image">
-                            <small class="form-text text-muted">Laissez vide si vous ne souhaitez pas modifier l'image.</small>
+                            <small class="form-text text-muted">Laissez vide si vous ne souhaitez pas modifier
+                                l'image.</small>
                         </div>
                         <button type="submit" name="modifier" class="btn btn-primary">Modifier</button>
                     </form>
@@ -225,39 +242,41 @@ $destinations = $bdd->query("SELECT id_destination, nom, description, image, sta
         });
     </script>
 </body>
+
 </html>
 
 
-    <!-- Modale d'ajout de destination -->
-    <div class="modal fade" id="addDestinationModal" tabindex="-1" aria-hidden="true">
-        <form class="modal-dialog modal-dialog-centered" role="document" method="POST" enctype="multipart/form-data">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Ajouter une destination</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+<!-- Modale d'ajout de destination -->
+<div class="modal fade" id="addDestinationModal" tabindex="-1" aria-hidden="true">
+    <form class="modal-dialog modal-dialog-centered" role="document" method="POST" enctype="multipart/form-data">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Ajouter une destination</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="nom" class="form-label">Nom de la destination :</label>
+                    <input type="text" class="form-control" id="nom" name="nom" required>
                 </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="nom" class="form-label">Nom de la destination :</label>
-                        <input type="text" class="form-control" id="nom" name="nom" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="description" class="form-label">Description :</label>
-                        <textarea class="form-control" id="description" name="description" required></textarea>
-                    </div>
-                    <div class="mb-3">
-                        <label for="image" class="form-label">Image :</label>
-                        <input type="file" class="form-control" id="image" name="image" accept="image/*" required>
-                    </div>
+                <div class="mb-3">
+                    <label for="description" class="form-label">Description :</label>
+                    <textarea class="form-control" id="description" name="description" required></textarea>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
-                    <button class="btn btn-primary" type="submit" name="ajouter">Enregistrer</button>
+                <div class="mb-3">
+                    <label for="image" class="form-label">Image :</label>
+                    <input type="file" class="form-control" id="image" name="image" accept="image/*" required>
                 </div>
             </div>
-        </form>
-    </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button class="btn btn-primary" type="submit" name="ajouter">Enregistrer</button>
+            </div>
+        </div>
+    </form>
+</div>
 
-    <?php include "include/common/script.php"; ?>
+<?php include "include/common/script.php"; ?>
 </body>
+
 </html>
