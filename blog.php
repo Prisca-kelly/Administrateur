@@ -12,7 +12,6 @@ if (isset($_POST["ajouter"])) { //Vérifie si le formulaire a été soumis en cl
         // Gestion de l'upload d'image
         $image = $_FILES["image"]["name"];
         $target_dir = "uploads/";
-        $target_dir = "uploads/";
         if (!file_exists($target_dir)) {
             mkdir($target_dir, 0777, true);
         }
@@ -67,6 +66,26 @@ if (isset($_POST['modifier'])) {
 
     echo "<script>alert('✅ Article modifié avec succès.'); window.location.href='blog.php';</script>";
 }
+
+// Supprimer un article
+if (isset($_POST['delete_article'])) {
+    $id_article = $_POST['delete_article'];
+    
+    // Supprimer l'image du dossier uploads
+    $image_path = "uploads/" . $_POST['image_old'];
+    if (file_exists($image_path)) {
+        unlink($image_path);
+    }
+
+    // Suppression de l'article de la base de données
+    $sql = "DELETE FROM articleblog WHERE id_article = :id_article";
+    $stmt = $bdd->prepare($sql);
+    $stmt->execute([
+        ':id_article' => $id_article
+    ]);
+
+    echo "<script>alert('✅ Article supprimé avec succès.'); window.location.href='blog.php';</script>";
+}
 ?>
 
 <!DOCTYPE html>
@@ -120,11 +139,16 @@ if (isset($_POST['modifier'])) {
                                                     </button>
 
                                                     <!-- Bouton Supprimer -->
-                                                    <a href="delete_article.php?id=<?= $article['id_article'] ?>"
-                                                        class="text-danger mx-2"
-                                                        onclick="return confirm('Êtes-vous sûr de vouloir supprimer cet article ?');">
-                                                        <i class="fa-solid fa-trash"></i>
-                                                    </a>
+                                                    <form action="blog.php" method="POST" style="display:inline;">
+                                                        <input type="hidden" name="delete_article"
+                                                            value="<?= $article['id_article'] ?>">
+                                                        <input type="hidden" name="image_old"
+                                                            value="<?= $article['image'] ?>">
+                                                        <button type="submit" class="btn btn-link text-danger"
+                                                            onclick="return confirm('Êtes-vous sûr de vouloir supprimer cet article ?')">
+                                                            <i class="fas fa-trash-alt"></i>
+                                                        </button>
+                                                    </form>
                                                 </td>
                                             </tr>
 
