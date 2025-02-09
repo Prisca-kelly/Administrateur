@@ -1,4 +1,4 @@
-<?php  
+<?php 
 require('model/config/database.php');
 require('model/config/util.php');
 $page = "destination";
@@ -8,11 +8,11 @@ if (isset($_POST["ajouter"])) {
     if (!empty($_POST["nom"]) && !empty($_POST["description"]) && !empty($_FILES["image"]["name"])) {
         $nom = htmlspecialchars($_POST["nom"]);
         $description = htmlspecialchars($_POST["description"]);
-
+        
         // Gestion de l'upload d'image
-        $image = $_FILES["image"]["name"];
+        $image = basename($_FILES["image"]["name"]);
         $target_dir = "uploads/";
-        $target_file = $target_dir . basename($image);
+        $target_file = $target_dir . $image;
 
         if (move_uploaded_file($_FILES["image"]["tmp_name"], $target_file)) {
             try {
@@ -23,7 +23,6 @@ if (isset($_POST["ajouter"])) {
                     ':description' => $description,
                     ':image' => $image
                 ]);
-
                 echo "<script>alert('✅ Destination ajoutée avec succès.'); window.location.href='destination.php';</script>";
             } catch (PDOException $e) {
                 echo "<script>alert('❌ Erreur : " . $e->getMessage() . "');</script>";
@@ -39,7 +38,6 @@ if (isset($_POST["ajouter"])) {
 // Changer le statut d'une destination
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST["toggle_statut"])) {
     $id_destination = $_POST["toggle_id"];
-
     try {
         $stmt = $bdd->prepare("UPDATE destination SET statut = NOT statut WHERE id_destination = :id_destination");
         $stmt->execute([':id_destination' => $id_destination]);
@@ -57,13 +55,12 @@ if (isset($_POST["modifier"])) {
         $description = htmlspecialchars($_POST["description"]);
         $image = $_FILES["image"]["name"];
 
-        // Si une nouvelle image est téléchargée
         if (!empty($image)) {
+            $image = basename($image);
             $target_dir = "uploads/";
-            $target_file = $target_dir . basename($image);
+            $target_file = $target_dir . $image;
             move_uploaded_file($_FILES["image"]["tmp_name"], $target_file);
         } else {
-            // Si l'image n'a pas changé, conserver l'ancienne image
             $stmt = $bdd->prepare("SELECT image FROM destination WHERE id_destination = :id_destination");
             $stmt->execute([':id_destination' => $id_destination]);
             $image = $stmt->fetchColumn();
@@ -90,6 +87,8 @@ if (isset($_POST["modifier"])) {
 // Récupération des destinations
 $destinations = $bdd->query("SELECT id_destination, nom, description, image, statut FROM destination")->fetchAll();
 ?>
+
+
 
 <!DOCTYPE html>
 <html lang="fr">
