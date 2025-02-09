@@ -1,7 +1,11 @@
 <?php
 require('model/config/database.php'); // Inclure la connexion à la base de données
 require('model/config/util.php'); // Fichier utilitaire
-include './model/config/checkAdmin.php';
+include 'model/config/checkAdmin.php';
+init_session(); // Initialiser la session
+if (is_connected()) {
+    header("Location: accueil.php");
+}
 $debug = false;
 
 

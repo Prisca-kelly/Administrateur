@@ -19,40 +19,40 @@
                 <div data-i18n="Analytics">Acceuil</div>
             </a>
         </li>
-        <li class="menu-item <?= $page == 'Utilisateur' ? 'active' : ''; ?> ">
-            <a href="utilisateur.php" class="menu-link">
-                <i class="menu-icon tf-icons bx bx-dock-top"></i>
-                <div data-i18n="Basic">Utilisateur</div>
-            </a>
-        </li>
-        <li class="menu-item <?= $page == 'Client' ? 'active' : ''; ?>">
-            <a href="client.php" class="menu-link">
-                <i class="menu-icon tf-icons bx bx-lock-open-alt"></i>
-                <div data-i18n="Basic">Clients</div>
-            </a>
-        </li>
-        <li class="menu-item <?= $page == 'Blog' ? 'active' : ''; ?> ">
-            <a href="blog.php" class="menu-link">
-                <i class="menu-icon tf-icons bx bx-collection"></i>
-                <div data-i18n="Basic">Blog</div>
-            </a>
-        </li>
         <li class="menu-item <?= $page == 'Hotel' ? 'active' : ''; ?> ">
             <a href="hotel.php" class="menu-link">
-                <i class="menu-icon tf-icons bx bx-collection"></i>
+                <i class="menu-icon tf-icons bx bx-buildings"></i>
                 <div data-i18n="Basic">Hotel</div>
             </a>
         </li>
         <li class="menu-item <?= $page == 'Destination' ? 'active' : ''; ?> ">
             <a href="destination.php" class="menu-link">
-                <i class="menu-icon tf-icons bx bx-collection"></i>
+                <i class="menu-icon tf-icons bx bxs-plane-alt"></i>
                 <div data-i18n="Basic">Destination</div>
             </a>
         </li>
         <li class="menu-item <?= $page == 'Billetterie' ? 'active' : ''; ?> ">
             <a href="billetterie.php" class="menu-link">
-                <i class="menu-icon tf-icons bx bx-table"></i>
+                <i class="menu-icon tf-icons bx bx-calendar"></i>
                 <div data-i18n="Tables">Billetterie</div>
+            </a>
+        </li>
+        <li class="menu-item <?= $page == 'Blog' ? 'active' : ''; ?> ">
+            <a href="blog.php" class="menu-link">
+                <i class="menu-icon tf-icons bx bx-file"></i>
+                <div data-i18n="Basic">Blog</div>
+            </a>
+        </li>
+        <li class="menu-item <?= $page == 'Client' ? 'active' : ''; ?>">
+            <a href="client.php" class="menu-link">
+                <i class="menu-icon tf-icons bx bx-user"></i>
+                <div data-i18n="Basic">Clients</div>
+            </a>
+        </li>
+        <li class="menu-item <?= $page == 'Utilisateur' ? 'active' : ''; ?> ">
+            <a href="utilisateur.php" class="menu-link">
+                <i class="menu-icon tf-icons bx bx-body"></i>
+                <div data-i18n="Basic">Utilisateur</div>
             </a>
         </li>
     </ul>
