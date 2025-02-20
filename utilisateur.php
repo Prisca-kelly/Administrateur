@@ -22,7 +22,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_user'])) {
     ]);
     echo "<script>alert('Mise à jour réussie !');</script>";
 }
- 
+
 //Suppression d'un utilisateur
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_user'])) {
     $id_utilisateur = $_POST['delete_user'];
@@ -42,6 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_user'])) {
     $adresse = htmlspecialchars($_POST['adresse']);
     $mot_de_passe = password_hash($_POST['mot_de_passe'], PASSWORD_DEFAULT);
     $statut = htmlspecialchars($_POST['statut']); // Ajouter statut
+    $mot_de_passe = sha1($_POST['mot_de_passe']);
 
     $stmt = $bdd->prepare("INSERT INTO utilisateur (nom, email, telephone, adresse, mot_de_passe, statut) VALUES (:nom, :email, :telephone, :adresse, :mot_de_passe, :statut)");
     $stmt->execute([

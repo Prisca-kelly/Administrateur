@@ -16,7 +16,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     try {
         // Vérifier si l'utilisateur existe
-        $stmt = $bdd->prepare("SELECT * FROM utilisateur WHERE email = ? AND mot_de_passe = ?");
+        $stmt = $bdd->prepare("SELECT * FROM utilisateur WHERE email = ? AND mot_de_passe = ? AND role = 'ADMIN'");
         $stmt->execute(array($email, $password));
         if ($stmt->rowCount() == 1) {
             $user = $stmt->fetch();
