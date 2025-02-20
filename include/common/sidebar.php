@@ -32,9 +32,9 @@
             </a>
         </li>
         <li class="menu-item <?= $page == 'Billetterie' ? 'active' : ''; ?> ">
-            <a href="billetterie.php" class="menu-link">
+            <a href="reservation.php" class="menu-link">
                 <i class="menu-icon tf-icons bx bx-calendar"></i>
-                <div data-i18n="Tables">Billetterie</div>
+                <div data-i18n="Tables">Réservation</div>
             </a>
         </li>
         <li class="menu-item <?= $page == 'Blog' ? 'active' : ''; ?> ">

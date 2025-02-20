@@ -1,6 +1,9 @@
 <?php
 require('model/config/database.php');
 require('model/config/util.php');
+
+header("Cache-Control: no-cache, must-revalidate"); // Évite la mise en cache
+
 $page = "Destination";
 
 // Ajouter une destination
@@ -16,14 +19,14 @@ if (isset($_POST["ajouter"])) {
 
         if (move_uploaded_file($_FILES["image"]["tmp_name"], $target_file)) {
             try {
-                $sql = "INSERT INTO destination (nom, description, image, statut) VALUES (:nom, :description, :image, 1)";
+                $sql = "INSERT INTO destination (nom, description, image, statut) VALUES (:nom, :description, :image, 'Activé')";
                 $stmt = $bdd->prepare($sql);
                 $stmt->execute([
                     ':nom' => $nom,
                     ':description' => $description,
                     ':image' => $image
                 ]);
-                echo "<script>alert('✅ Destination ajoutée avec succès.'); window.location.href='destination.php';</script>";
+                echo "<script>alert('✅ Destination ajoutée avec succès.'); location.reload();</script>";
             } catch (PDOException $e) {
                 echo "<script>alert('❌ Erreur : " . $e->getMessage() . "');</script>";
             }
@@ -36,14 +39,14 @@ if (isset($_POST["ajouter"])) {
 }
 
 // Changer le statut d'une destination
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST["toggle_statut"])) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST["toggle_id"])) {
     $id_destination = $_POST["toggle_id"];
     try {
-        $stmt = $bdd->prepare("UPDATE destination SET statut = NOT statut WHERE id_destination = :id_destination");
+        // Inverser le statut
+        $stmt = $bdd->prepare("UPDATE destination SET statut = IF(statut='Activé', 'Désactivée', 'Activé') WHERE id_destination = :id_destination");
         $stmt->execute([':id_destination' => $id_destination]);
-        echo "<script>window.location.href='destination.php';</script>";
     } catch (PDOException $e) {
-        echo "<script>alert('❌ Erreur lors de la mise à jour du statut : " . $e->getMessage() . "');</script>";
+        echo "❌ Erreur lors de la mise à jour du statut : " . $e->getMessage();
     }
 }
 
@@ -75,7 +78,7 @@ if (isset($_POST["modifier"])) {
                 ':description' => $description,
                 ':image' => $image
             ]);
-            echo "<script>alert('✅ Destination modifiée avec succès.'); window.location.href='destination.php';</script>";
+            echo "<script>alert('✅ Destination modifiée avec succès.'); location.reload();</script>";
         } catch (PDOException $e) {
             echo "<script>alert('❌ Erreur lors de la modification : " . $e->getMessage() . "');</script>";
         }
@@ -88,8 +91,6 @@ if (isset($_POST["modifier"])) {
 $destinations = $bdd->query("SELECT id_destination, nom, description, image, statut FROM destination")->fetchAll();
 ?>
 
-
-
 <!DOCTYPE html>
 <html lang="fr">
 
@@ -97,6 +98,7 @@ $destinations = $bdd->query("SELECT id_destination, nom, description, image, sta
     <?php include "include/common/head.php"; ?>
     <title><?= $page ?></title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
 </head>
 
 <body>
@@ -109,13 +111,11 @@ $destinations = $bdd->query("SELECT id_destination, nom, description, image, sta
                     <div class="container-fluid flex-grow-1 container-p-y">
                         <div class="d-flex justify-content-between align-items-center mb-4">
                             <h4 class="fw-bold py-3 mb-0">Destinations</h4>
-                            <button class="btn btn-primary" data-bs-toggle="modal"
-                                data-bs-target="#addDestinationModal">
+                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addDestinationModal">
                                 <i class="fas fa-plus"></i> Ajouter
                             </button>
                         </div>
 
-                        <!-- Tableau des destinations -->
                         <div class="card">
                             <div class="table-responsive text-nowrap">
                                 <table class="table">
@@ -124,6 +124,7 @@ $destinations = $bdd->query("SELECT id_destination, nom, description, image, sta
                                             <th>Nom</th>
                                             <th>Description</th>
                                             <th>Image</th>
+                                            <th>Statut</th>
                                             <th>Actions</th>
                                         </tr>
                                     </thead>
@@ -132,20 +133,18 @@ $destinations = $bdd->query("SELECT id_destination, nom, description, image, sta
                                             <tr>
                                                 <td><?= htmlspecialchars($destination['nom']) ?></td>
                                                 <td><?= htmlspecialchars($destination['description']) ?></td>
-                                                <td><img src="uploads/<?= htmlspecialchars($destination['image']) ?>"
-                                                        width="80" height="60"></td>
+                                                <td><img src="uploads/<?= htmlspecialchars($destination['image']) ?>" width="80" height="60"></td>
+                                                <td>
+                                                    <?= ($destination['statut'] === 'Activé') ? 'Activée' : 'Désactivée' ?>
+                                                </td>
                                                 <td>
                                                     <form action="destination.php" method="post" style="display:inline;">
-                                                        <input type="hidden" name="toggle_id"
-                                                            value="<?= $destination['id_destination'] ?>">
-                                                        <button type="submit" name="toggle_statut"
-                                                            class="btn btn-link text-warning">
-                                                            <i
-                                                                class="fa-solid <?= $destination['statut'] ? 'fa-lock-open' : 'fa-lock' ?>"></i>
+                                                        <input type="hidden" name="toggle_id" value="<?= $destination['id_destination'] ?>">
+                                                        <button type="submit" name="toggle_statut" class="btn btn-link text-warning">
+                                                            <i class="fa-solid <?= ($destination['statut'] === 'Activé') ? 'fa-lock-open' : 'fa-lock' ?>"></i>
                                                         </button>
                                                     </form>
-                                                    <button class="btn btn-link text-info" data-bs-toggle="modal"
-                                                        data-bs-target="#editDestinationModal"
+                                                    <button class="btn btn-link text-info" data-bs-toggle="modal" data-bs-target="#editDestinationModal"
                                                         data-id="<?= $destination['id_destination'] ?>"
                                                         data-nom="<?= htmlspecialchars($destination['nom']) ?>"
                                                         data-description="<?= htmlspecialchars($destination['description']) ?>"
@@ -237,45 +236,37 @@ $destinations = $bdd->query("SELECT id_destination, nom, description, image, sta
                 document.getElementById('edit_id').value = button.getAttribute('data-id');
                 document.getElementById('edit_nom').value = button.getAttribute('data-nom');
                 document.getElementById('edit_description').value = button.getAttribute('data-description');
+                document.querySelectorAll('button[name="toggle_statut"]').forEach(function(button) {
+    button.addEventListener('click', function(event) {
+        event.preventDefault();
+        
+        let destinationId = this.getAttribute('data-id'); // Récupérer l'ID de la destination
+
+        let formData = new FormData();
+        formData.append('toggle_id', destinationId); // Ajouter l'ID à la requête
+
+        // Faire une requête AJAX pour mettre à jour le statut
+        fetch('destination.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.text())
+        .then(data => {
+            if (data.includes('✅')) {
+                // Si la mise à jour réussie, mettre à jour le statut dans l'interface sans recharger
+                let statutCell = this.closest('tr').querySelector('td:nth-child(4)');
+                statutCell.innerText = statutCell.innerText === 'Activée' ? 'Désactivée' : 'Activée';
+            } else {
+                alert("Erreur lors de la mise à jour du statut");
+            }
+        })
+        .catch(error => console.error("Erreur AJAX:", error));
+    });
+});
+
             });
         });
     </script>
-</body>
-
-</html>
-
-
-<!-- Modale d'ajout de destination -->
-<div class="modal fade" id="addDestinationModal" tabindex="-1" aria-hidden="true">
-    <form class="modal-dialog modal-dialog-centered" role="document" method="POST" enctype="multipart/form-data">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Ajouter une destination</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div class="mb-3">
-                    <label for="nom" class="form-label">Nom de la destination :</label>
-                    <input type="text" class="form-control" id="nom" name="nom" required>
-                </div>
-                <div class="mb-3">
-                    <label for="description" class="form-label">Description :</label>
-                    <textarea class="form-control" id="description" name="description" required></textarea>
-                </div>
-                <div class="mb-3">
-                    <label for="image" class="form-label">Image :</label>
-                    <input type="file" class="form-control" id="image" name="image" accept="image/*" required>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
-                <button class="btn btn-primary" type="submit" name="ajouter">Enregistrer</button>
-            </div>
-        </div>
-    </form>
-</div>
-
-<?php include "include/common/script.php"; ?>
 </body>
 
 </html>

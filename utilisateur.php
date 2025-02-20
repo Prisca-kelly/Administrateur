@@ -10,12 +10,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_user'])) {
     $nom = htmlspecialchars($_POST['nom']);
     $adresse = htmlspecialchars($_POST['adresse']);
     $telephone = htmlspecialchars($_POST['telephone']);
+    $statut = htmlspecialchars($_POST['statut']); // Récupérer le statut
 
-    $stmt = $bdd->prepare("UPDATE utilisateur SET nom = :nom, adresse = :adresse, telephone = :telephone WHERE id_utilisateur = :id_utilisateur");
+    $stmt = $bdd->prepare("UPDATE utilisateur SET nom = :nom, adresse = :adresse, telephone = :telephone, statut = :statut WHERE id_utilisateur = :id_utilisateur");
     $stmt->execute([
         ':nom' => $nom,
         ':adresse' => $adresse,
         ':telephone' => $telephone,
+        ':statut' => $statut, // Mettre à jour le statut
         ':id_utilisateur' => $id_utilisateur
     ]);
     echo "<script>alert('Mise à jour réussie !');</script>";
@@ -39,19 +41,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_user'])) {
     $telephone = htmlspecialchars($_POST['telephone']);
     $adresse = htmlspecialchars($_POST['adresse']);
     $mot_de_passe = password_hash($_POST['mot_de_passe'], PASSWORD_DEFAULT);
+    $statut = htmlspecialchars($_POST['statut']); // Ajouter statut
 
-    $stmt = $bdd->prepare("INSERT INTO utilisateur (nom, email, telephone, adresse, mot_de_passe) VALUES (:nom, :email, :telephone, :adresse, :mot_de_passe)");
+    $stmt = $bdd->prepare("INSERT INTO utilisateur (nom, email, telephone, adresse, mot_de_passe, statut) VALUES (:nom, :email, :telephone, :adresse, :mot_de_passe, :statut)");
     $stmt->execute([
         ':nom' => $nom,
         ':email' => $email,
         ':telephone' => $telephone,
         ':adresse' => $adresse,
-        ':mot_de_passe' => $mot_de_passe
+        ':mot_de_passe' => $mot_de_passe,
+        ':statut' => $statut // Ajouter statut
     ]);
     echo "<script>alert('Utilisateur ajouté avec succès !');</script>";
 }
 
-$users = $bdd->query("SELECT id_utilisateur, nom, email, telephone, adresse FROM utilisateur")->fetchAll();
+// Récupérer uniquement les utilisateurs avec le rôle 'admin'
+$users = $bdd->query("SELECT id_utilisateur, nom, email, telephone, adresse, statut FROM utilisateur WHERE role = 'admin'")->fetchAll();
 ?>
 
 <!DOCTYPE html>
@@ -86,6 +91,7 @@ $users = $bdd->query("SELECT id_utilisateur, nom, email, telephone, adresse FROM
                                             <th>Email</th>
                                             <th>Téléphone</th>
                                             <th>Adresse</th>
+                                            <th>Statut</th>
                                             <th>Actions</th>
                                         </tr>
                                     </thead>
@@ -96,20 +102,26 @@ $users = $bdd->query("SELECT id_utilisateur, nom, email, telephone, adresse FROM
                                                 <td><?= htmlspecialchars($user['email']) ?></td>
                                                 <td><?= htmlspecialchars($user['telephone']) ?></td>
                                                 <td><?= htmlspecialchars($user['adresse']) ?></td>
+                                                <td><?= htmlspecialchars($user['statut']) ?></td> <!-- Affichage du statut -->
                                                 <td>
                                                     <a href="#"
-                                                        onclick="showEditModal('<?= $user['id_utilisateur'] ?>', '<?= $user['nom'] ?>', '<?= $user['email'] ?>', '<?= $user['telephone'] ?>', '<?= $user['adresse'] ?>')"
-                                                        class="text-warning me-2">
-                                                        <i class="fas fa-edit"></i>
+                                                       onclick="showEditModal('<?= $user['id_utilisateur'] ?>', '<?= $user['nom'] ?>', '<?= $user['email'] ?>', '<?= $user['telephone'] ?>', '<?= $user['adresse'] ?>', '<?= $user['statut'] ?>')"
+                                                       class="text-warning me-2">
+                                                       <i class="fas fa-edit"></i>
                                                     </a>
                                                     <form action="utilisateur.php" method="POST" style="display:inline;">
                                                         <input type="hidden" name="delete_user"
-                                                            value="<?= $user['id_utilisateur'] ?>">
+                                                               value="<?= $user['id_utilisateur'] ?>">
                                                         <button type="submit" class="btn btn-link text-danger"
-                                                            onclick="return confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ?')">
+                                                                onclick="return confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ?')">
                                                             <i class="fas fa-trash-alt"></i>
                                                         </button>
                                                     </form>
+                                                    <!-- Ajouter l'icône du cadenas ici -->
+                                                    <a href="#"
+                                                       onclick="toggleLock('<?= $user['id_utilisateur'] ?>')" class="text-info me-2">
+                                                       <i class="fas fa-lock"></i>
+                                                    </a>
                                                 </td>
                                             </tr>
                                         <?php endforeach; ?>
@@ -166,7 +178,7 @@ $users = $bdd->query("SELECT id_utilisateur, nom, email, telephone, adresse FROM
         <form class="modal-dialog modal-dialog-centered" method="POST">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Ajouter un utilisateur</h5>
+                    <h5 class="modal-title">Modifier un utilisateur</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
@@ -186,11 +198,18 @@ $users = $bdd->query("SELECT id_utilisateur, nom, email, telephone, adresse FROM
                         <label for="uAdresse" class="form-label">Adresse</label>
                         <input type="text" class="form-control" id="uAdresse" name="adresse" required>
                     </div>
+                    <div class="mb-3">
+                        <label for="uStatut" class="form-label">Statut</label>
+                        <select class="form-select" id="uStatut" name="statut" required>
+                            <option value="actif">Actif</option>
+                            <option value="inactif">Inactif</option>
+                        </select>
+                    </div>
                 </div>
                 <input type="number" id="id_utilisateur" name="id_utilisateur" hidden>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
-                    <button class="btn btn-primary" type="submit" name="update_user">Ajouter</button>
+                    <button class="btn btn-primary" type="submit" name="update_user">Mise à jour</button>
                 </div>
             </div>
         </form>
@@ -198,12 +217,13 @@ $users = $bdd->query("SELECT id_utilisateur, nom, email, telephone, adresse FROM
 
     <?php include "include/common/script.php"; ?>
     <script>
-        function showEditModal(id, nom, email, telephone, adresse) {
+        function showEditModal(id, nom, email, telephone, adresse, statut) {
             document.getElementById('id_utilisateur').value = id;
             document.getElementById('uNom').value = nom;
             document.getElementById('uEmail').value = email;
             document.getElementById('uTelephone').value = telephone;
             document.getElementById('uAdresse').value = adresse;
+            document.getElementById('uStatut').value = statut;
             var modal = new bootstrap.Modal(document.getElementById('updateUserModal'));
             modal.show();
         }

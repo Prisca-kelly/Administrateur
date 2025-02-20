@@ -4,7 +4,7 @@ require('model/config/util.php');
 $page = "Blog";
 
 // Ajouter un article
-if (isset($_POST["ajouter"])) { //Vérifie si le formulaire a été soumis en cliquant sur un bouton d'ajout d'article (avec name="ajouter").
+if (isset($_POST["ajouter"])) {
     if (!empty($_POST["titre"]) && !empty($_POST["contenu"]) && !empty($_FILES["image"]["name"])) {
         $titre = htmlspecialchars($_POST["titre"]);
         $contenu = htmlspecialchars($_POST["contenu"]);
@@ -38,7 +38,7 @@ if (isset($_POST["ajouter"])) { //Vérifie si le formulaire a été soumis en cl
     }
 }
 
-// Récupération des articles
+// Récupération des articles avec la colonne statut
 $articles = $bdd->query("SELECT id_article, titre, contenu, image, statut FROM articleblog")->fetchAll();
 
 // Modifier un article
@@ -86,6 +86,21 @@ if (isset($_POST['delete_article'])) {
 
     echo "<script>alert('✅ Article supprimé avec succès.'); window.location.href='blog.php';</script>";
 }
+
+// Changer le statut de l'article
+if (isset($_POST['changer_statut'])) {
+    $id_article = $_POST['id_article'];
+    $statut = $_POST['statut'] == 'publié' ? 'non-publié' : 'publié'; // Inverse le statut (chaîne de caractères)
+
+    $sql = "UPDATE articleblog SET statut = :statut WHERE id_article = :id_article";
+    $stmt = $bdd->prepare($sql);
+    $stmt->execute([
+        ':statut' => $statut,
+        ':id_article' => $id_article
+    ]);
+
+    echo "<script>alert('✅ Statut changé avec succès.'); window.location.href='blog.php';</script>";
+}
 ?>
 
 <!DOCTYPE html>
@@ -121,6 +136,7 @@ if (isset($_POST['delete_article'])) {
                                             <th>Titre</th>
                                             <th>Contenu</th>
                                             <th>Image</th>
+                                            <th>Statut</th>
                                             <th>Actions</th>
                                         </tr>
                                     </thead>
@@ -131,7 +147,14 @@ if (isset($_POST['delete_article'])) {
                                                 <td><?= htmlspecialchars(substr($article['contenu'], 0, 100)) ?>...</td>
                                                 <td><img src="uploads/<?= htmlspecialchars($article['image']) ?>" width="80"
                                                         height="60"></td>
-                                                <td>
+                                                        <td>
+                                                           <?php if ($article['statut'] == 'publié'): ?>
+                                                            <span>Publié</span>
+                                                           <?php else: ?>
+                                                            <span>Non publié</span>
+                                                           <?php endif; ?>
+                                                            </td>
+                                                        <td>
                                                     <!-- Bouton Modifier -->
                                                     <button class="btn btn-no-style mx-2" data-bs-toggle="modal"
                                                         data-bs-target="#editBlogModal<?= $article['id_article'] ?>">
@@ -149,54 +172,57 @@ if (isset($_POST['delete_article'])) {
                                                             <i class="fas fa-trash-alt"></i>
                                                         </button>
                                                     </form>
+
+                                                    <!-- Bouton Changer le Statut avec icônes -->
+                                                    <form action="blog.php" method="POST" style="display:inline;">
+                                                        <input type="hidden" name="id_article" value="<?= $article['id_article'] ?>">
+                                                        <input type="hidden" name="statut" value="<?= $article['statut'] ?>">
+                                                        <button type="submit" class="btn btn-no-style text-primary" name="changer_statut">
+                                                            <?php if ($article['statut'] == 1): ?>
+                                                                <i class="fa-solid fa-toggle-on"></i>  <!-- Statut publié -->
+                                                            <?php else: ?>
+                                                                <i class="fa-solid fa-toggle-off"></i>  <!-- Statut non publié -->
+                                                            <?php endif; ?>
+                                                        </button>
+                                                    </form>
                                                 </td>
                                             </tr>
 
                                             <!-- Modal Modifier Article -->
-                                            <div class="modal fade" id="editBlogModal<?= $article['id_article'] ?>"
-                                                tabindex="-1"
-                                                aria-labelledby="editBlogModalLabel<?= $article['id_article'] ?>"
-                                                aria-hidden="true">
+                                            <div class="modal fade" id="editBlogModal<?= $article['id_article'] ?>" tabindex="-1"
+                                                aria-labelledby="editBlogModalLabel<?= $article['id_article'] ?>" aria-hidden="true">
                                                 <div class="modal-dialog">
                                                     <div class="modal-content">
                                                         <div class="modal-header">
-                                                            <h5 class="modal-title"
-                                                                id="editBlogModalLabel<?= $article['id_article'] ?>">
+                                                            <h5 class="modal-title" id="editBlogModalLabel<?= $article['id_article'] ?>">
                                                                 Modifier l'article</h5>
                                                             <button type="button" class="btn-close" data-bs-dismiss="modal"
                                                                 aria-label="Close"></button>
                                                         </div>
                                                         <div class="modal-body">
-                                                            <form action="blog.php" method="post"
-                                                                enctype="multipart/form-data">
-                                                                <input type="hidden" name="id_article"
-                                                                    value="<?= $article['id_article'] ?>">
-                                                                <input type="hidden" name="image_old"
-                                                                    value="<?= $article['image'] ?>">
+                                                            <form action="blog.php" method="post" enctype="multipart/form-data">
+                                                                <input type="hidden" name="id_article" value="<?= $article['id_article'] ?>">
+                                                                <input type="hidden" name="image_old" value="<?= $article['image'] ?>">
 
                                                                 <div class="mb-3">
                                                                     <label class="form-label">Titre</label>
                                                                     <input type="text" class="form-control" name="titre"
-                                                                        value="<?= htmlspecialchars($article['titre']) ?>"
-                                                                        required>
+                                                                        value="<?= htmlspecialchars($article['titre']) ?>" required>
                                                                 </div>
                                                                 <div class="mb-3">
                                                                     <label class="form-label">Contenu</label>
-                                                                    <textarea class="form-control" name="contenu"
-                                                                        required><?= htmlspecialchars($article['contenu']) ?></textarea>
+                                                                    <textarea class="form-control" name="contenu" required>
+                                                                        <?= htmlspecialchars($article['contenu']) ?>
+                                                                    </textarea>
                                                                 </div>
                                                                 <div class="mb-3">
                                                                     <label class="form-label">Image</label>
-                                                                    <input type="file" class="form-control" name="image"
-                                                                        accept="image/*">
-                                                                    <img src="uploads/<?= htmlspecialchars($article['image']) ?>"
-                                                                        width="80" height="60" class="mt-2">
+                                                                    <input type="file" class="form-control" name="image" accept="image/*">
+                                                                    <img src="uploads/<?= htmlspecialchars($article['image']) ?>" width="80" height="60" class="mt-2">
                                                                 </div>
                                                                 <div class="modal-footer">
-                                                                    <button type="button" class="btn btn-outline-secondary"
-                                                                        data-bs-dismiss="modal">Annuler</button>
-                                                                    <button class="btn btn-primary" type="submit"
-                                                                        name="modifier">Enregistrer</button>
+                                                                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
+                                                                    <button class="btn btn-primary" type="submit" name="modifier">Enregistrer</button>
                                                                 </div>
                                                             </form>
                                                         </div>
@@ -237,8 +263,7 @@ if (isset($_POST['delete_article'])) {
                             <input type="file" class="form-control" name="image" accept="image/*" required>
                         </div>
                         <div class="modal-footer">
-                            <button type="button" class="btn btn-outline-secondary"
-                                data-bs-dismiss="modal">Annuler</button>
+                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
                             <button class="btn btn-primary" type="submit" name="ajouter">Enregistrer</button>
                         </div>
                     </form>
