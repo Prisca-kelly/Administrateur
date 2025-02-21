@@ -23,7 +23,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_user'])) {
     echo "<script>alert('Mise à jour réussie !');</script>";
 }
 
-//Suppression d'un utilisateur
+// Changement de statut avec validation des statuts possibles
+if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["update_status"])) {
+    $statut = $_POST['statut']; // Récupère le statut du formulaire
+    $id_utilisateur = $_POST['id_utilisateur'];
+    $statuts_valides = ['Actif', 'Bloqué', 'Supprimé']; // Liste des statuts valides
+    if (!in_array($statut, $statuts_valides)) {
+        echo "<script>alert('Statut invalide');</script>";
+        exit;
+    }
+
+    // Préparation et exécution de la mise à jour du statut
+    $stmt = $bdd->prepare("UPDATE utilisateur SET statut = :statut WHERE id_utilisateur = :id_utilisateur");
+    $stmt->execute([
+        ':statut' => $statut,
+        ':id_utilisateur' => $id_utilisateur
+    ]);
+
+    echo "success";
+    exit;    
+}
+
+
+// Suppression d'un utilisateur
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_user'])) {
     $id_utilisateur = $_POST['delete_user'];
     try {
@@ -40,7 +62,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_user'])) {
     $email = htmlspecialchars($_POST['email']);
     $telephone = htmlspecialchars($_POST['telephone']);
     $adresse = htmlspecialchars($_POST['adresse']);
-    $mot_de_passe = password_hash($_POST['mot_de_passe'], PASSWORD_DEFAULT);
     $statut = htmlspecialchars($_POST['statut']); // Ajouter statut
     $mot_de_passe = sha1($_POST['mot_de_passe']);
 
@@ -103,26 +124,52 @@ $users = $bdd->query("SELECT id_utilisateur, nom, email, telephone, adresse, sta
                                                 <td><?= htmlspecialchars($user['email']) ?></td>
                                                 <td><?= htmlspecialchars($user['telephone']) ?></td>
                                                 <td><?= htmlspecialchars($user['adresse']) ?></td>
-                                                <td><?= htmlspecialchars($user['statut']) ?></td> <!-- Affichage du statut -->
                                                 <td>
-                                                    <a href="#"
-                                                       onclick="showEditModal('<?= $user['id_utilisateur'] ?>', '<?= $user['nom'] ?>', '<?= $user['email'] ?>', '<?= $user['telephone'] ?>', '<?= $user['adresse'] ?>', '<?= $user['statut'] ?>')"
-                                                       class="text-warning me-2">
-                                                       <i class="fas fa-edit"></i>
+                                                    <?php
+                                                    // Ajoutez des classes ou des styles selon le statut
+                                                    $statusClass = '';
+                                                    $statusText = '';
+
+                                                    switch ($user['statut']) {
+                                                        case 'Actif':
+                                                            $statusClass = 'text-success';
+                                                            $statusText = 'Actif';
+                                                            break;
+                                                        case 'Bloqué':
+                                                            $statusClass = 'text-danger';
+                                                            $statusText = 'Bloqué';
+                                                            break;
+                                                        case 'Supprimé':
+                                                            $statusClass = 'text-muted';
+                                                            $statusText = 'Supprimé';
+                                                            break;
+                                                    }
+                                                    ?>
+                                                    <span class="<?= $statusClass ?>"><?= $statusText ?></span>
+                                                </td>
+                                                <td>
+                                                    <!-- Bouton pour changer le statut -->
+                                                    <a href="#" 
+                                                       class="text-primary toggle-status me-2" 
+                                                       data-id="<?= $user['id_utilisateur'] ?>" 
+                                                       data-status="<?= $user['statut'] ?>">
+                                                        <i class="fas fa-sync-alt"></i>
                                                     </a>
+                                                    
+                                                    <!-- Bouton pour modifier -->
+                                                    <a href="#"
+                                                       onclick="showEditModal('<?= $user['id_utilisateur'] ?>', '<?= $user['nom'] ?>', '<?= $user['email'] ?>', '<?= $user['telephone'] ?>', '<?= $user['adresse'] ?>')"
+                                                       class="text-warning me-2">
+                                                        <i class="fas fa-edit text-primary" data-bs-toggle="modal" data-bs-target="#updateUserModal"></i>
+                                                    </a>
+                                                    
+                                                    <!-- Bouton pour supprimer -->
                                                     <form action="utilisateur.php" method="POST" style="display:inline;">
-                                                        <input type="hidden" name="delete_user"
-                                                               value="<?= $user['id_utilisateur'] ?>">
-                                                        <button type="submit" class="btn btn-link text-danger"
-                                                                onclick="return confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ?')">
+                                                        <input type="hidden" name="delete_user" value="<?= $user['id_utilisateur'] ?>">
+                                                        <button type="submit" class="btn btn-link text-danger" onclick="return confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ?')">
                                                             <i class="fas fa-trash-alt"></i>
                                                         </button>
                                                     </form>
-                                                    <!-- Ajouter l'icône du cadenas ici -->
-                                                    <a href="#"
-                                                       onclick="toggleLock('<?= $user['id_utilisateur'] ?>')" class="text-info me-2">
-                                                       <i class="fas fa-lock"></i>
-                                                    </a>
                                                 </td>
                                             </tr>
                                         <?php endforeach; ?>
@@ -199,13 +246,6 @@ $users = $bdd->query("SELECT id_utilisateur, nom, email, telephone, adresse, sta
                         <label for="uAdresse" class="form-label">Adresse</label>
                         <input type="text" class="form-control" id="uAdresse" name="adresse" required>
                     </div>
-                    <div class="mb-3">
-                        <label for="uStatut" class="form-label">Statut</label>
-                        <select class="form-select" id="uStatut" name="statut" required>
-                            <option value="actif">Actif</option>
-                            <option value="inactif">Inactif</option>
-                        </select>
-                    </div>
                 </div>
                 <input type="number" id="id_utilisateur" name="id_utilisateur" hidden>
                 <div class="modal-footer">
@@ -217,18 +257,60 @@ $users = $bdd->query("SELECT id_utilisateur, nom, email, telephone, adresse, sta
     </div>
 
     <?php include "include/common/script.php"; ?>
+
     <script>
-        function showEditModal(id, nom, email, telephone, adresse, statut) {
-            document.getElementById('id_utilisateur').value = id;
-            document.getElementById('uNom').value = nom;
-            document.getElementById('uEmail').value = email;
-            document.getElementById('uTelephone').value = telephone;
-            document.getElementById('uAdresse').value = adresse;
-            document.getElementById('uStatut').value = statut;
-            var modal = new bootstrap.Modal(document.getElementById('updateUserModal'));
-            modal.show();
+        document.addEventListener("DOMContentLoaded", function () {
+            document.querySelectorAll(".toggle-status").forEach(button => {
+                button.addEventListener("click", function (e) {
+                    e.preventDefault();
+                    let userId = this.getAttribute("data-id");
+                    let currentStatus = this.getAttribute("data-status");
+                    let newStatus;
+
+            // Logique pour gérer les trois statuts
+            if (currentStatus === "Actif") {
+                newStatus = "Bloqué";
+            } else if (currentStatus === "Bloqué") {
+                newStatus = "Supprimé";
+            } else {
+                newStatus = "Actif"; // Retourne à "Actif"
+            }
+
+            let icon = this.querySelector("i");
+
+            let formData = new FormData();
+            formData.append("update_status", true);
+            formData.append("id_utilisateur", userId);
+            formData.append("statut", newStatus);
+
+
+                    // Mise à jour du statut via AJAX
+                    fetch("utilisateur.php", {
+                        method: "POST",
+                        body: new URLSearchParams({
+                            "update_status": true,
+                            "id_utilisateur": userId,
+                            "statut": newStatus
+                        }),
+                    }).then(response => response.text()).then(data => {
+                        if (data === "success") {
+                            location.reload(); // Recharger la page après la mise à jour
+                        } else {
+                            alert("Erreur lors de la mise à jour du statut");
+                        }
+                    });
+                });
+            });
+        });
+
+        function showEditModal(id, nom, email, telephone, adresse) {
+            document.getElementById("id_utilisateur").value = id;
+            document.getElementById("uNom").value = nom;
+            document.getElementById("uEmail").value = email;
+            document.getElementById("uTelephone").value = telephone;
+            document.getElementById("uAdresse").value = adresse;
         }
     </script>
 </body>
 
-</html>
+</html>Le statut ne change pas  

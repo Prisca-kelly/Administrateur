@@ -145,19 +145,17 @@ $clients = $bdd->query("SELECT id_utilisateur, nom, email, telephone, adresse, s
     <span class="<?= $statusClass ?>"><?= $statusText ?></span>
 </td>
                                                 <td>
-                                                <td>
-                                   <!-- Bouton pour changer le statut -->
+                                  <!-- Bouton pour changer le statut -->
                                        <a href="#" 
                                           class="text-primary toggle-status me-2" 
                                           data-id="<?= $client['id_utilisateur'] ?>" 
                                           data-status="<?= $client['statut'] ?>">
                                            <i class="fas fa-sync-alt"></i>
-                                       </a>
                                     <!-- Bouton pour modifier -->
                                        <a href="#"
                                           onclick="showEditModal('<?= $client['id_utilisateur'] ?>', '<?= $client['nom'] ?>', '<?= $client['email'] ?>', '<?= $client['telephone'] ?>', '<?= $client['adresse'] ?>')"
                                           class="text-warning me-2">
-                                          <i class="fas fa-edit"></i>
+                                          <i class="fas fa-edit text-primary" data-bs-toggle="modal" data-bs-target="#updateClientModal"></i>
                                        </a>
                                     <!-- Bouton pour supprimer -->
                                        <form action="client.php" method="POST" style="display:inline;">
@@ -303,6 +301,6 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 });
 </script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
-
 </html>
