@@ -41,23 +41,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_user'])) {
     $telephone = htmlspecialchars($_POST['telephone']);
     $adresse = htmlspecialchars($_POST['adresse']);
     $mot_de_passe = password_hash($_POST['mot_de_passe'], PASSWORD_DEFAULT);
-    $statut = htmlspecialchars($_POST['statut']); // Ajouter statut
+    $statut = htmlspecialchars($_POST['statut']);
     $mot_de_passe = sha1($_POST['mot_de_passe']);
 
-    $stmt = $bdd->prepare("INSERT INTO utilisateur (nom, email, telephone, adresse, mot_de_passe, statut) VALUES (:nom, :email, :telephone, :adresse, :mot_de_passe, :statut)");
+    $stmt = $bdd->prepare("INSERT INTO utilisateur (nom, email, telephone, adresse, mot_de_passe, statut, `role`) VALUES (:nom, :email, :telephone, :adresse, :mot_de_passe, :statut, :role)");
     $stmt->execute([
         ':nom' => $nom,
         ':email' => $email,
         ':telephone' => $telephone,
         ':adresse' => $adresse,
         ':mot_de_passe' => $mot_de_passe,
-        ':statut' => $statut // Ajouter statut
+        ':statut' => $statut,
+        ':role' => 'ADMIN'
     ]);
     echo "<script>alert('Utilisateur ajouté avec succès !');</script>";
 }
 
 // Récupérer uniquement les utilisateurs avec le rôle 'admin'
-$users = $bdd->query("SELECT id_utilisateur, nom, email, telephone, adresse, statut FROM utilisateur WHERE role = 'admin'")->fetchAll();
+$sqlUsers = $bdd->query("SELECT id_utilisateur, nom, email, telephone, adresse, statut FROM utilisateur WHERE role = 'admin'");
+$users = $sqlUsers->fetchAll();
 ?>
 
 <!DOCTYPE html>
@@ -97,31 +99,36 @@ $users = $bdd->query("SELECT id_utilisateur, nom, email, telephone, adresse, sta
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <?php foreach ($users as $user) : ?>
+                                        <?php
+                                        if ($sqlUsers->rowCount() === 0) {
+                                            echo "<tr><td colspan='6' class='text-center'>Aucun utilisateur trouvé</td></tr>";
+                                        }
+                                        foreach ($users as $user) : ?>
                                             <tr>
                                                 <td><?= htmlspecialchars($user['nom']) ?></td>
                                                 <td><?= htmlspecialchars($user['email']) ?></td>
                                                 <td><?= htmlspecialchars($user['telephone']) ?></td>
                                                 <td><?= htmlspecialchars($user['adresse']) ?></td>
-                                                <td><?= htmlspecialchars($user['statut']) ?></td> <!-- Affichage du statut -->
+                                                <td><?= htmlspecialchars($user['statut']) ?></td>
+                                                <!-- Affichage du statut -->
                                                 <td>
                                                     <a href="#"
-                                                       onclick="showEditModal('<?= $user['id_utilisateur'] ?>', '<?= $user['nom'] ?>', '<?= $user['email'] ?>', '<?= $user['telephone'] ?>', '<?= $user['adresse'] ?>', '<?= $user['statut'] ?>')"
-                                                       class="text-warning me-2">
-                                                       <i class="fas fa-edit"></i>
+                                                        onclick="showEditModal('<?= $user['id_utilisateur'] ?>', '<?= $user['nom'] ?>', '<?= $user['email'] ?>', '<?= $user['telephone'] ?>', '<?= $user['adresse'] ?>', '<?= $user['statut'] ?>')"
+                                                        class="text-warning me-2">
+                                                        <i class="fas fa-edit"></i>
                                                     </a>
                                                     <form action="utilisateur.php" method="POST" style="display:inline;">
                                                         <input type="hidden" name="delete_user"
-                                                               value="<?= $user['id_utilisateur'] ?>">
+                                                            value="<?= $user['id_utilisateur'] ?>">
                                                         <button type="submit" class="btn btn-link text-danger"
-                                                                onclick="return confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ?')">
+                                                            onclick="return confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ?')">
                                                             <i class="fas fa-trash-alt"></i>
                                                         </button>
                                                     </form>
                                                     <!-- Ajouter l'icône du cadenas ici -->
-                                                    <a href="#"
-                                                       onclick="toggleLock('<?= $user['id_utilisateur'] ?>')" class="text-info me-2">
-                                                       <i class="fas fa-lock"></i>
+                                                    <a href="#" onclick="toggleLock('<?= $user['id_utilisateur'] ?>')"
+                                                        class="text-info me-2">
+                                                        <i class="fas fa-lock"></i>
                                                     </a>
                                                 </td>
                                             </tr>

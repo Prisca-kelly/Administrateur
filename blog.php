@@ -39,7 +39,8 @@ if (isset($_POST["ajouter"])) {
 }
 
 // Récupération des articles avec la colonne statut
-$articles = $bdd->query("SELECT id_article, titre, contenu, image, statut FROM articleblog")->fetchAll();
+$sqlArticle = $bdd->query("SELECT id_article, titre, contenu, image, statut FROM articleblog");
+$articles = $sqlArticle->fetchAll();
 
 // Modifier un article
 if (isset($_POST['modifier'])) {
@@ -141,20 +142,24 @@ if (isset($_POST['changer_statut'])) {
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <?php foreach ($articles as $article) : ?>
+                                        <?php
+                                        if ($sqlArticle->rowCount() === 0) {
+                                            echo "<tr><td colspan='5' class='text-center'>Aucun article trouvé.</td></tr>";
+                                        }
+                                        foreach ($articles as $article) : ?>
                                             <tr>
                                                 <td><?= htmlspecialchars($article['titre']) ?></td>
                                                 <td><?= htmlspecialchars(substr($article['contenu'], 0, 100)) ?>...</td>
                                                 <td><img src="uploads/<?= htmlspecialchars($article['image']) ?>" width="80"
                                                         height="60"></td>
-                                                        <td>
-                                                           <?php if ($article['statut'] == 'publié'): ?>
-                                                            <span>Publié</span>
-                                                           <?php else: ?>
-                                                            <span>Non publié</span>
-                                                           <?php endif; ?>
-                                                            </td>
-                                                        <td>
+                                                <td>
+                                                    <?php if ($article['statut'] == 'publié'): ?>
+                                                        <span>Publié</span>
+                                                    <?php else: ?>
+                                                        <span>Non publié</span>
+                                                    <?php endif; ?>
+                                                </td>
+                                                <td>
                                                     <!-- Bouton Modifier -->
                                                     <button class="btn btn-no-style mx-2" data-bs-toggle="modal"
                                                         data-bs-target="#editBlogModal<?= $article['id_article'] ?>">
@@ -175,13 +180,17 @@ if (isset($_POST['changer_statut'])) {
 
                                                     <!-- Bouton Changer le Statut avec icônes -->
                                                     <form action="blog.php" method="POST" style="display:inline;">
-                                                        <input type="hidden" name="id_article" value="<?= $article['id_article'] ?>">
-                                                        <input type="hidden" name="statut" value="<?= $article['statut'] ?>">
-                                                        <button type="submit" class="btn btn-no-style text-primary" name="changer_statut">
+                                                        <input type="hidden" name="id_article"
+                                                            value="<?= $article['id_article'] ?>">
+                                                        <input type="hidden" name="statut"
+                                                            value="<?= $article['statut'] ?>">
+                                                        <button type="submit" class="btn btn-no-style text-primary"
+                                                            name="changer_statut">
                                                             <?php if ($article['statut'] == 1): ?>
-                                                                <i class="fa-solid fa-toggle-on"></i>  <!-- Statut publié -->
+                                                                <i class="fa-solid fa-toggle-on"></i> <!-- Statut publié -->
                                                             <?php else: ?>
-                                                                <i class="fa-solid fa-toggle-off"></i>  <!-- Statut non publié -->
+                                                                <i class="fa-solid fa-toggle-off"></i>
+                                                                <!-- Statut non publié -->
                                                             <?php endif; ?>
                                                         </button>
                                                     </form>
@@ -189,25 +198,32 @@ if (isset($_POST['changer_statut'])) {
                                             </tr>
 
                                             <!-- Modal Modifier Article -->
-                                            <div class="modal fade" id="editBlogModal<?= $article['id_article'] ?>" tabindex="-1"
-                                                aria-labelledby="editBlogModalLabel<?= $article['id_article'] ?>" aria-hidden="true">
+                                            <div class="modal fade" id="editBlogModal<?= $article['id_article'] ?>"
+                                                tabindex="-1"
+                                                aria-labelledby="editBlogModalLabel<?= $article['id_article'] ?>"
+                                                aria-hidden="true">
                                                 <div class="modal-dialog">
                                                     <div class="modal-content">
                                                         <div class="modal-header">
-                                                            <h5 class="modal-title" id="editBlogModalLabel<?= $article['id_article'] ?>">
+                                                            <h5 class="modal-title"
+                                                                id="editBlogModalLabel<?= $article['id_article'] ?>">
                                                                 Modifier l'article</h5>
                                                             <button type="button" class="btn-close" data-bs-dismiss="modal"
                                                                 aria-label="Close"></button>
                                                         </div>
                                                         <div class="modal-body">
-                                                            <form action="blog.php" method="post" enctype="multipart/form-data">
-                                                                <input type="hidden" name="id_article" value="<?= $article['id_article'] ?>">
-                                                                <input type="hidden" name="image_old" value="<?= $article['image'] ?>">
+                                                            <form action="blog.php" method="post"
+                                                                enctype="multipart/form-data">
+                                                                <input type="hidden" name="id_article"
+                                                                    value="<?= $article['id_article'] ?>">
+                                                                <input type="hidden" name="image_old"
+                                                                    value="<?= $article['image'] ?>">
 
                                                                 <div class="mb-3">
                                                                     <label class="form-label">Titre</label>
                                                                     <input type="text" class="form-control" name="titre"
-                                                                        value="<?= htmlspecialchars($article['titre']) ?>" required>
+                                                                        value="<?= htmlspecialchars($article['titre']) ?>"
+                                                                        required>
                                                                 </div>
                                                                 <div class="mb-3">
                                                                     <label class="form-label">Contenu</label>
@@ -217,12 +233,16 @@ if (isset($_POST['changer_statut'])) {
                                                                 </div>
                                                                 <div class="mb-3">
                                                                     <label class="form-label">Image</label>
-                                                                    <input type="file" class="form-control" name="image" accept="image/*">
-                                                                    <img src="uploads/<?= htmlspecialchars($article['image']) ?>" width="80" height="60" class="mt-2">
+                                                                    <input type="file" class="form-control" name="image"
+                                                                        accept="image/*">
+                                                                    <img src="uploads/<?= htmlspecialchars($article['image']) ?>"
+                                                                        width="80" height="60" class="mt-2">
                                                                 </div>
                                                                 <div class="modal-footer">
-                                                                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
-                                                                    <button class="btn btn-primary" type="submit" name="modifier">Enregistrer</button>
+                                                                    <button type="button" class="btn btn-outline-secondary"
+                                                                        data-bs-dismiss="modal">Annuler</button>
+                                                                    <button class="btn btn-primary" type="submit"
+                                                                        name="modifier">Enregistrer</button>
                                                                 </div>
                                                             </form>
                                                         </div>
@@ -263,7 +283,8 @@ if (isset($_POST['changer_statut'])) {
                             <input type="file" class="form-control" name="image" accept="image/*" required>
                         </div>
                         <div class="modal-footer">
-                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
+                            <button type="button" class="btn btn-outline-secondary"
+                                data-bs-dismiss="modal">Annuler</button>
                             <button class="btn btn-primary" type="submit" name="ajouter">Enregistrer</button>
                         </div>
                     </form>

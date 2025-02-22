@@ -42,7 +42,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["update_status"])) {
         exit;
     }
 }
- 
+
 // Suppression d'un client
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_client'])) {
     $id_utilisateur = $_POST['delete_client'];
@@ -57,25 +57,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_client'])) {
 
 
 // Ajout d'un client
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_client'])) {
-    $nom = htmlspecialchars($_POST['nom']);
-    $email = htmlspecialchars($_POST['email']);
-    $telephone = htmlspecialchars($_POST['telephone']);
-    $adresse = htmlspecialchars($_POST['adresse']);
-    $mot_de_passe = password_hash($_POST['mot_de_passe'], PASSWORD_DEFAULT);
+// if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_client'])) {
+//     $nom = htmlspecialchars($_POST['nom']);
+//     $email = htmlspecialchars($_POST['email']);
+//     $telephone = htmlspecialchars($_POST['telephone']);
+//     $adresse = htmlspecialchars($_POST['adresse']);
+//     $mot_de_passe = password_hash($_POST['mot_de_passe'], PASSWORD_DEFAULT);
 
-    $stmt = $bdd->prepare("INSERT INTO utilisateur (nom, email, telephone, adresse, mot_de_passe, role) VALUES (:nom, :email, :telephone, :adresse, :mot_de_passe, 'CLIENT')");
-    $stmt->execute([
-        ':nom' => $nom,
-        ':email' => $email,
-        ':telephone' => $telephone,
-        ':adresse' => $adresse,
-        ':mot_de_passe' => $mot_de_passe
-    ]);
-    echo "<script>alert('Client ajouté avec succès !');</script>";
-}
+//     $stmt = $bdd->prepare("INSERT INTO utilisateur (nom, email, telephone, adresse, mot_de_passe, role) VALUES (:nom, :email, :telephone, :adresse, :mot_de_passe, 'CLIENT')");
+//     $stmt->execute([
+//         ':nom' => $nom,
+//         ':email' => $email,
+//         ':telephone' => $telephone,
+//         ':adresse' => $adresse,
+//         ':mot_de_passe' => $mot_de_passe,
+//     ]);
+//     echo "<script>alert('Client ajouté avec succès !');</script>";
+// }
 
-$clients = $bdd->query("SELECT id_utilisateur, nom, email, telephone, adresse, statut FROM utilisateur WHERE role = 'CLIENT'")->fetchAll();
+$sqlClients = $bdd->query("SELECT id_utilisateur, nom, email, telephone, adresse, statut FROM utilisateur WHERE role = 'CLIENT'");
+$clients = $sqlClients->fetchAll();
 ?>
 
 <!DOCTYPE html>
@@ -97,9 +98,9 @@ $clients = $bdd->query("SELECT id_utilisateur, nom, email, telephone, adresse, s
                     <div class="container-fluid flex-grow-1 container-p-y">
                         <div class="d-flex justify-content-between align-items-center mb-4">
                             <h4 class="fw-bold py-3 mb-0">Clients</h4>
-                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addClientModal">
+                            <!-- <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addClientModal">
                                 <i class="fas fa-plus"></i> Ajouter
-                            </button>
+                            </button> -->
                         </div>
                         <div class="card">
                             <div class="table-responsive text-nowrap">
@@ -115,59 +116,62 @@ $clients = $bdd->query("SELECT id_utilisateur, nom, email, telephone, adresse, s
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <?php foreach ($clients as $client) : ?>
+                                        <?php
+                                        if ($sqlClients->rowCount() === 0) {
+                                            echo "<tr><td colspan='6' class='text-center'>Aucun client trouvé.</td></tr>";
+                                        }
+                                        foreach ($clients as $client) : ?>
                                             <tr>
                                                 <td><?= htmlspecialchars($client['nom']) ?></td>
                                                 <td><?= htmlspecialchars($client['email']) ?></td>
                                                 <td><?= htmlspecialchars($client['telephone']) ?></td>
                                                 <td><?= htmlspecialchars($client['adresse']) ?></td>
                                                 <td>
-    <?php
-    // Ajoutez des classes ou des styles selon le statut
-    $statusClass = '';
-    $statusText = '';
+                                                    <?php
+                                                    // Ajoutez des classes ou des styles selon le statut
+                                                    $statusClass = '';
+                                                    $statusText = '';
 
-    switch ($client['statut']) {
-        case 'Actif':
-            $statusClass = 'text-success';
-            $statusText = 'Actif';
-            break;
-        case 'Bloqué':
-            $statusClass = 'text-danger';
-            $statusText = 'Bloqué';
-            break;
-        case 'Supprimé':
-            $statusClass = 'text-muted';
-            $statusText = 'Supprimé';
-            break;
-    }
-    ?>
-    <span class="<?= $statusClass ?>"><?= $statusText ?></span>
-</td>
+                                                    switch ($client['statut']) {
+                                                        case 'Actif':
+                                                            $statusClass = 'text-success';
+                                                            $statusText = 'Actif';
+                                                            break;
+                                                        case 'Bloqué':
+                                                            $statusClass = 'text-danger';
+                                                            $statusText = 'Bloqué';
+                                                            break;
+                                                        case 'Supprimé':
+                                                            $statusClass = 'text-muted';
+                                                            $statusText = 'Supprimé';
+                                                            break;
+                                                    }
+                                                    ?>
+                                                    <span class="<?= $statusClass ?>"><?= $statusText ?></span>
+                                                </td>
                                                 <td>
-                                                <td>
-                                   <!-- Bouton pour changer le statut -->
-                                       <a href="#" 
-                                          class="text-primary toggle-status me-2" 
-                                          data-id="<?= $client['id_utilisateur'] ?>" 
-                                          data-status="<?= $client['statut'] ?>">
-                                           <i class="fas fa-sync-alt"></i>
-                                       </a>
-                                    <!-- Bouton pour modifier -->
-                                       <a href="#"
-                                          onclick="showEditModal('<?= $client['id_utilisateur'] ?>', '<?= $client['nom'] ?>', '<?= $client['email'] ?>', '<?= $client['telephone'] ?>', '<?= $client['adresse'] ?>')"
-                                          class="text-warning me-2">
-                                          <i class="fas fa-edit"></i>
-                                       </a>
-                                    <!-- Bouton pour supprimer -->
-                                       <form action="client.php" method="POST" style="display:inline;">
-                                           <input type="hidden" name="delete_client" value="<?= $client['id_utilisateur'] ?>">
-                                           <button type="submit" class="btn btn-link text-danger"
-                                            onclick="return confirm('Êtes-vous sûr de vouloir supprimer ce client ?')">
-                                               <i class="fas fa-trash-alt"></i>
-                                           </button>
-                                       </form>
-                                              </td>
+                                                    <!-- Bouton pour changer le statut -->
+                                                    <a href="#" class="text-primary toggle-status me-2"
+                                                        data-id="<?= $client['id_utilisateur'] ?>"
+                                                        data-status="<?= $client['statut'] ?>">
+                                                        <i class="fas fa-sync-alt"></i>
+                                                    </a>
+                                                    <!-- Bouton pour modifier -->
+                                                    <a href="#"
+                                                        onclick="showEditModal('<?= $client['id_utilisateur'] ?>', '<?= $client['nom'] ?>', '<?= $client['email'] ?>', '<?= $client['telephone'] ?>', '<?= $client['adresse'] ?>')"
+                                                        class="text-warning me-2">
+                                                        <i class="fas fa-edit"></i>
+                                                    </a>
+                                                    <!-- Bouton pour supprimer -->
+                                                    <form action="client.php" method="POST" style="display:inline;">
+                                                        <input type="hidden" name="delete_client"
+                                                            value="<?= $client['id_utilisateur'] ?>">
+                                                        <button type="submit" class="btn btn-link text-danger"
+                                                            onclick="return confirm('Êtes-vous sûr de vouloir supprimer ce client ?')">
+                                                            <i class="fas fa-trash-alt"></i>
+                                                        </button>
+                                                    </form>
+                                                </td>
                                             </tr>
                                         <?php endforeach; ?>
                                     </tbody>
@@ -255,54 +259,55 @@ $clients = $bdd->query("SELECT id_utilisateur, nom, email, telephone, adresse, s
 
     <?php include "include/common/script.php"; ?>
     <script>
-document.addEventListener("DOMContentLoaded", function () {
-    document.querySelectorAll(".toggle-status").forEach(button => {
-        button.addEventListener("click", function (e) {
-            e.preventDefault();
-            let userId = this.getAttribute("data-id");
-            let currentStatus = this.getAttribute("data-status");
-            let newStatus;
+        document.addEventListener("DOMContentLoaded", function() {
+            document.querySelectorAll(".toggle-status").forEach(button => {
+                button.addEventListener("click", function(e) {
+                    e.preventDefault();
+                    let userId = this.getAttribute("data-id");
+                    let currentStatus = this.getAttribute("data-status");
+                    let newStatus;
 
-            // Logique pour gérer les trois statuts
-            if (currentStatus === "Actif") {
-                newStatus = "Bloqué";
-            } else if (currentStatus === "Bloqué") {
-                newStatus = "Supprimé";
-            } else {
-                newStatus = "Actif"; // Retourne à "Actif"
-            }
+                    // Logique pour gérer les trois statuts
+                    if (currentStatus === "Actif") {
+                        newStatus = "Bloqué";
+                    } else if (currentStatus === "Bloqué") {
+                        newStatus = "Supprimé";
+                    } else {
+                        newStatus = "Actif"; // Retourne à "Actif"
+                    }
 
-            let icon = this.querySelector("i");
+                    let icon = this.querySelector("i");
 
-            let formData = new FormData();
-            formData.append("update_status", true);
-            formData.append("id_utilisateur", userId);
-            formData.append("statut", newStatus);
+                    let formData = new FormData();
+                    formData.append("update_status", true);
+                    formData.append("id_utilisateur", userId);
+                    formData.append("statut", newStatus);
 
-            fetch("client.php", {
-    method: "POST",
-    body: formData
-})
-.then(response => response.text())
-.then(data => {
-    if (data.trim() === "success") {
-        this.setAttribute("data-status", newStatus);
-        icon.classList.toggle("text-success", newStatus === "Actif");
-        icon.classList.toggle("text-danger", newStatus === "Bloqué");
-        icon.classList.toggle("text-muted", newStatus === "Supprimé"); // Couleur pour "Supprimé"
+                    fetch("client.php", {
+                            method: "POST",
+                            body: formData
+                        })
+                        .then(response => response.text())
+                        .then(data => {
+                            if (data.trim() === "success") {
+                                this.setAttribute("data-status", newStatus);
+                                icon.classList.toggle("text-success", newStatus === "Actif");
+                                icon.classList.toggle("text-danger", newStatus === "Bloqué");
+                                icon.classList.toggle("text-muted", newStatus ===
+                                    "Supprimé"); // Couleur pour "Supprimé"
 
-        // Recharge la page après la mise à jour du statut
-        location.reload();
-    } else {
-        alert("Erreur lors de la mise à jour du statut.");
-    }
-})
-.catch(error => console.error("Erreur:", error));
+                                // Recharge la page après la mise à jour du statut
+                                location.reload();
+                            } else {
+                                alert("Erreur lors de la mise à jour du statut.");
+                            }
+                        })
+                        .catch(error => console.error("Erreur:", error));
 
+                });
+            });
         });
-    });
-});
-</script>
+    </script>
 </body>
 
 </html>
