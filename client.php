@@ -2,7 +2,7 @@
 // inclusion des fichiers
 require('model/config/database.php'); // Gère la connexion à la base de données
 require('model/config/util.php'); // contient des fonctions utilitaires
-$page = "Clients";  // Page actuelle
+$page = "Client";  // Page actuelle
 
 // Mise à jour des informations d'un client
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_client'])) {
@@ -39,7 +39,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["update_status"])) {
     ]);
 
     echo "success";
-    exit;    
+    exit;
 }
 
 
@@ -105,12 +105,12 @@ $clients = $sqlClients->fetchAll();
                                                 <td><?= htmlspecialchars($client['telephone']) ?></td>
                                                 <td><?= htmlspecialchars($client['adresse']) ?></td>
                                                 <td>
-                                                <?php
+                                                    <?php
                                                     // Ajoutez des classes ou des styles selon le statut
                                                     $statusClass = '';
                                                     $statusText = '';
 
-                                                    switch ($client['statut']) { 
+                                                    switch ($client['statut']) {
                                                         case 'Actif':
                                                             $statusClass = 'text-success';
                                                             $statusText = 'Actif';
@@ -136,14 +136,16 @@ $clients = $sqlClients->fetchAll();
                                                     </a>
                                                     <!-- Bouton pour modifier -->
                                                     <a href="#"
-                                                       onclick="showEditModal('<?= $client['id_utilisateur'] ?>', '<?= $client['nom'] ?>', '<?= $client['email'] ?>', '<?= $client['telephone'] ?>', '<?= $client['adresse'] ?>')"
-                                                       class="text-warning me-2">
-                                                        <i class="fas fa-edit text-primary" data-bs-toggle="modal" data-bs-target="#updateClientModal"></i>
+                                                        onclick="showEditModal('<?= $client['id_utilisateur'] ?>', '<?= $client['nom'] ?>', '<?= $client['email'] ?>', '<?= $client['telephone'] ?>', '<?= $client['adresse'] ?>')"
+                                                        class="text-warning me-2">
+                                                        <i class="fas fa-edit text-primary" data-bs-toggle="modal"
+                                                            data-bs-target="#updateClientModal"></i>
                                                     </a>
-                                                    
+
                                                     <!-- Bouton pour supprimer -->
-                                                    <a href="#" onclick="markAsDeleted('<?= $client['id_utilisateur'] ?>')" class="text-danger">
-                                                    <i class="fas fa-trash-alt"></i>
+                                                    <a href="#" onclick="markAsDeleted('<?= $client['id_utilisateur'] ?>')"
+                                                        class="text-danger">
+                                                        <i class="fas fa-trash-alt"></i>
                                                     </a>
                                                 </td>
                                             </tr>
@@ -195,69 +197,72 @@ $clients = $sqlClients->fetchAll();
 
     <?php include "include/common/script.php"; ?>
     <script>
-    // Déjà présent : Gestion des utilisateurs supprimés
-    function markAsDeleted(idUtilisateur) {
-        if (confirm("Êtes-vous sûr de vouloir marquer cet utilisateur comme supprimé ?")) {
-            let formData = new FormData();
-            formData.append("delete_user", idUtilisateur);
+        // Déjà présent : Gestion des utilisateurs supprimés
+        function markAsDeleted(idUtilisateur) {
+            if (confirm("Êtes-vous sûr de vouloir marquer cet utilisateur comme supprimé ?")) {
+                let formData = new FormData();
+                formData.append("delete_user", idUtilisateur);
 
-            fetch("utilisateur.php", {
-                method: "POST",
-                body: formData,
-            }).then(response => response.text()).then(data => {
-                if (data === "success") {
-                    location.reload(); // Recharger la page pour voir les changements
-                } else {
-                    alert("Erreur lors de la suppression.");
-                }
-            });
+                fetch("utilisateur.php", {
+                    method: "POST",
+                    body: formData,
+                }).then(response => response.text()).then(data => {
+                    if (data === "success") {
+                        location.reload(); // Recharger la page pour voir les changements
+                    } else {
+                        alert("Erreur lors de la suppression.");
+                    }
+                });
+            }
         }
-    }
 
-    // Déjà présent : Préremplir le modal de modification
-    function showEditModal(id, nom, email, telephone, adresse) {
-        document.getElementById("id_utilisateur").value = id;
-        document.getElementById("uNom").value = nom;
-        document.getElementById("uEmail").value = email;
-        document.getElementById("uTelephone").value = telephone;
-        document.getElementById("uAdresse").value = adresse;
-    }
+        // Déjà présent : Préremplir le modal de modification
+        function showEditModal(id, nom, email, telephone, adresse) {
+            document.getElementById("id_utilisateur").value = id;
+            document.getElementById("uNom").value = nom;
+            document.getElementById("uEmail").value = email;
+            document.getElementById("uTelephone").value = telephone;
+            document.getElementById("uAdresse").value = adresse;
+        }
 
-    // Nouveau : Gestion du changement de statut
-    document.querySelectorAll('.toggle-status').forEach(function (element) {
-        element.addEventListener('click', function (e) {
-            e.preventDefault();
-            
-            var idUtilisateur = element.getAttribute('data-id');
-            var statutActuel = element.getAttribute('data-status');
-            var nouveauStatut = (statutActuel === 'Actif') ? 'Bloqué' : 'Actif'; // Alterne entre 'Actif' et 'Bloqué'
-            
-            let formData = new FormData();
-            formData.append("update_status", true);
-            formData.append("id_utilisateur", idUtilisateur);
-            formData.append("statut", nouveauStatut);
-            
-            fetch('utilisateur.php', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.text())
-            .then(data => {
-                if (data === 'success') {
-                    // Met à jour l'affichage du statut sur la page sans recharger
-                    element.closest('tr').querySelector('td:nth-child(5) span').textContent = nouveauStatut;
-                    element.closest('tr').querySelector('td:nth-child(5) span').className = (nouveauStatut === 'Actif') ? 'text-success' : 'text-danger';
-                    
-                    // Met à jour l'attribut data-status de l'élément cliqué
-                    element.setAttribute('data-status', nouveauStatut);
-                } else {
-                    alert("Erreur lors de la mise à jour du statut.");
-                }
-            })
-            .catch(error => console.error('Erreur : ', error));
+        // Nouveau : Gestion du changement de statut
+        document.querySelectorAll('.toggle-status').forEach(function(element) {
+            element.addEventListener('click', function(e) {
+                e.preventDefault();
+
+                var idUtilisateur = element.getAttribute('data-id');
+                var statutActuel = element.getAttribute('data-status');
+                var nouveauStatut = (statutActuel === 'Actif') ? 'Bloqué' :
+                    'Actif'; // Alterne entre 'Actif' et 'Bloqué'
+
+                let formData = new FormData();
+                formData.append("update_status", true);
+                formData.append("id_utilisateur", idUtilisateur);
+                formData.append("statut", nouveauStatut);
+
+                fetch('utilisateur.php', {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => response.text())
+                    .then(data => {
+                        if (data === 'success') {
+                            // Met à jour l'affichage du statut sur la page sans recharger
+                            element.closest('tr').querySelector('td:nth-child(5) span').textContent =
+                                nouveauStatut;
+                            element.closest('tr').querySelector('td:nth-child(5) span').className = (
+                                nouveauStatut === 'Actif') ? 'text-success' : 'text-danger';
+
+                            // Met à jour l'attribut data-status de l'élément cliqué
+                            element.setAttribute('data-status', nouveauStatut);
+                        } else {
+                            alert("Erreur lors de la mise à jour du statut.");
+                        }
+                    })
+                    .catch(error => console.error('Erreur : ', error));
+            });
         });
-    });
-</script>
+    </script>
 </body>
 
 </html>

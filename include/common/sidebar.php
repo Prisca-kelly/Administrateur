@@ -31,7 +31,7 @@
                 <div data-i18n="Basic">Destination</div>
             </a>
         </li>
-        <li class="menu-item <?= $page == 'Billetterie' ? 'active' : ''; ?> ">
+        <li class="menu-item <?= $page == 'Réservation' ? 'active' : ''; ?> ">
             <a href="reservation.php" class="menu-link">
                 <i class="menu-icon tf-icons bx bx-calendar"></i>
                 <div data-i18n="Tables">Réservation</div>
