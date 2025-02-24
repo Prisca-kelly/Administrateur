@@ -50,6 +50,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST["toggle_id"])) {
     }
 }
 
+// Suppression d'une destination
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_destination'])) {
+    $id_destination = $_POST['delete_destination'];
+
+    // Mettre à jour le statut à "Supprimé" au lieu de supprimer la destination
+    $stmt = $bdd->prepare("UPDATE destination SET statut = 'Supprimé' WHERE id_destination = :id_destination");
+    $stmt->execute([':id_destination' => $id_destination]);
+
+    echo "success";
+    exit;
+}
+
+
 // Modifier une destination
 if (isset($_POST["modifier"])) {
     if (!empty($_POST["nom"]) && !empty($_POST["description"])) {
@@ -135,8 +148,28 @@ $destinations = $bdd->query("SELECT id_destination, nom, description, image, sta
                                                 <td><?= htmlspecialchars($destination['description']) ?></td>
                                                 <td><img src="uploads/<?= htmlspecialchars($destination['image']) ?>" width="80" height="60"></td>
                                                 <td>
-                                                    <?= ($destination['statut'] === 'Activé') ? 'Activée' : 'Désactivée' ?>
-                                                </td>
+                                                    <?php
+                                                    // Ajoutez des classes ou des styles selon le statut de la destination
+                                                    $statusClass = '';
+                                                    $statusText = '';
+
+                                                    switch ($destination['statut']) {
+                                                        case 'Activé':
+                                                            $statusClass = 'text-success';
+                                                            $statusText = 'Activée';
+                                                            break;
+                                                        case 'Désactivée':
+                                                            $statusClass = 'text-warning';
+                                                            $statusText = 'Désactivée';
+                                                            break;
+                                                        case 'Supprimé':
+                                                            $statusClass = 'text-muted';
+                                                            $statusText = 'Supprimé';
+                                                            break;
+                                                    }
+                                                    ?>
+                                                    <span class="<?= $statusClass ?>"><?= $statusText ?></span>
+                                                    </td>
                                                 <td>
                                                     <form action="destination.php" method="post" style="display:inline;">
                                                         <input type="hidden" name="toggle_id" value="<?= $destination['id_destination'] ?>">
@@ -151,6 +184,12 @@ $destinations = $bdd->query("SELECT id_destination, nom, description, image, sta
                                                         data-image="<?= htmlspecialchars($destination['image']) ?>">
                                                         <i class="fas fa-edit"></i>
                                                     </button>
+                                                    <form action="destination.php" method="post" style="display:inline;">
+                                                       <input type="hidden" name="delete_destination" value="<?= $destination['id_destination'] ?>">
+                                                       <button type="submit" class="btn btn-link text-danger">
+                                                           <i class="fas fa-trash-alt"></i>
+                                                       </button>
+                                                    </form>
                                                 </td>
                                             </tr>
                                         <?php endforeach; ?>
@@ -230,43 +269,69 @@ $destinations = $bdd->query("SELECT id_destination, nom, description, image, sta
     </div>
 
     <script>
-        var editButtons = document.querySelectorAll('button[data-bs-target="#editDestinationModal"]');
-        editButtons.forEach(function(button) {
-            button.addEventListener('click', function() {
-                document.getElementById('edit_id').value = button.getAttribute('data-id');
-                document.getElementById('edit_nom').value = button.getAttribute('data-nom');
-                document.getElementById('edit_description').value = button.getAttribute('data-description');
-                document.querySelectorAll('button[name="toggle_statut"]').forEach(function(button) {
-    button.addEventListener('click', function(event) {
-        event.preventDefault();
-        
-        let destinationId = this.getAttribute('data-id'); // Récupérer l'ID de la destination
+    // Gestion des destinations supprimées
+    function markAsDeleted(idDestination) {
+        if (confirm("Êtes-vous sûr de vouloir marquer cette destination comme supprimée ?")) {
+            let formData = new FormData();
+            formData.append("delete_destination", idDestination);
 
-        let formData = new FormData();
-        formData.append('toggle_id', destinationId); // Ajouter l'ID à la requête
-
-        // Faire une requête AJAX pour mettre à jour le statut
-        fetch('destination.php', {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => response.text())
-        .then(data => {
-            if (data.includes('✅')) {
-                // Si la mise à jour réussie, mettre à jour le statut dans l'interface sans recharger
-                let statutCell = this.closest('tr').querySelector('td:nth-child(4)');
-                statutCell.innerText = statutCell.innerText === 'Activée' ? 'Désactivée' : 'Activée';
-            } else {
-                alert("Erreur lors de la mise à jour du statut");
-            }
-        })
-        .catch(error => console.error("Erreur AJAX:", error));
-    });
-});
-
+            fetch("destination.php", {
+                method: "POST",
+                body: formData,
+            }).then(response => response.text()).then(data => {
+                if (data === "success") {
+                    location.reload(); // Recharger la page pour voir les changements
+                } else {
+                    alert("Erreur lors de la suppression.");
+                }
             });
+        }
+    }
+
+    // Déjà présent : Préremplir le modal de modification
+    function showEditModal(id, nom, description, statut) {
+        document.getElementById("id_destination").value = id;
+        document.getElementById("dNom").value = nom;
+        document.getElementById("dDescription").value = description;
+        document.getElementById("dStatut").value = statut;
+    }
+
+    // Nouveau : Gestion du changement de statut des destinations
+    document.querySelectorAll('.toggle-status-destination').forEach(function (element) {
+        element.addEventListener('click', function (e) {
+            e.preventDefault();
+            
+            var idDestination = element.getAttribute('data-id');
+            var statutActuel = element.getAttribute('data-status');
+            var nouveauStatut = (statutActuel === 'Activée') ? 'Désactivée' : 'Activée'; // Alterne entre 'Activée' et 'Désactivée'
+            
+            let formData = new FormData();
+            formData.append("update_status_destination", true);
+            formData.append("id_destination", idDestination);
+            formData.append("statut", nouveauStatut);
+            
+            fetch('destination.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.text())
+            .then(data => {
+                if (data === 'success') {
+                    // Met à jour l'affichage du statut sur la page sans recharger
+                    element.closest('tr').querySelector('td:nth-child(5) span').textContent = nouveauStatut;
+                    element.closest('tr').querySelector('td:nth-child(5) span').className = (nouveauStatut === 'Activée') ? 'text-success' : 'text-warning';
+                    
+                    // Met à jour l'attribut data-status de l'élément cliqué
+                    element.setAttribute('data-status', nouveauStatut);
+                } else {
+                    alert("Erreur lors de la mise à jour du statut.");
+                }
+            })
+            .catch(error => console.error('Erreur : ', error));
         });
-    </script>
+    });
+</script>
+
 </body>
 
 </html>

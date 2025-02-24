@@ -21,59 +21,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_client'])) {
     echo "<script>alert('Mise à jour réussie !');</script>";
 }
 
-// Mise à jour du statut d'un client
+// Changement de statut avec validation des statuts possibles
 if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["update_status"])) {
-    $id_utilisateur = $_POST["id_utilisateur"];
-    $statut = $_POST["statut"];
-
-    // Vérification des statuts valides
-    $statut_valid = ['Actif', 'Bloqué', 'Supprimé'];
-    if (!in_array($statut, $statut_valid)) {
-        echo "Statut invalide.";
+    $statut = $_POST['statut']; // Récupère le statut du formulaire
+    $id_utilisateur = $_POST['id_utilisateur'];
+    $statuts_valides = ['Actif', 'Bloqué']; // Liste des statuts valides
+    if (!in_array($statut, $statuts_valides)) {
+        echo "<script>alert('Statut invalide');</script>";
         exit;
     }
 
+    // Préparation et exécution de la mise à jour du statut
     $stmt = $bdd->prepare("UPDATE utilisateur SET statut = :statut WHERE id_utilisateur = :id_utilisateur");
-    if ($stmt->execute([':statut' => $statut, ':id_utilisateur' => $id_utilisateur])) {
-        echo "success";
-        exit;
-    } else {
-        echo "error";
-        exit;
-    }
-}
+    $stmt->execute([
+        ':statut' => $statut,
+        ':id_utilisateur' => $id_utilisateur
+    ]);
 
-// Suppression d'un client
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_client'])) {
-    $id_utilisateur = $_POST['delete_client'];
-    try {
-        $stmt = $bdd->prepare("DELETE FROM utilisateur WHERE id_utilisateur = :id_utilisateur AND role = 'CLIENT'");
-        $stmt->execute([':id_utilisateur' => $id_utilisateur]);
-        echo "<script>alert('Client supprimé avec succès !');</script>";
-    } catch (PDOException $e) {
-        echo "<script>alert('Erreur lors de la suppression : " . $e->getMessage() . "');</script>";
-    }
+    echo "success";
+    exit;    
 }
 
 
-// Ajout d'un client
-// if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_client'])) {
-//     $nom = htmlspecialchars($_POST['nom']);
-//     $email = htmlspecialchars($_POST['email']);
-//     $telephone = htmlspecialchars($_POST['telephone']);
-//     $adresse = htmlspecialchars($_POST['adresse']);
-//     $mot_de_passe = password_hash($_POST['mot_de_passe'], PASSWORD_DEFAULT);
+// Suppression d'un utilisateur
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_user'])) {
+    $id_utilisateur = $_POST['delete_user'];
 
-//     $stmt = $bdd->prepare("INSERT INTO utilisateur (nom, email, telephone, adresse, mot_de_passe, role) VALUES (:nom, :email, :telephone, :adresse, :mot_de_passe, 'CLIENT')");
-//     $stmt->execute([
-//         ':nom' => $nom,
-//         ':email' => $email,
-//         ':telephone' => $telephone,
-//         ':adresse' => $adresse,
-//         ':mot_de_passe' => $mot_de_passe,
-//     ]);
-//     echo "<script>alert('Client ajouté avec succès !');</script>";
-// }
+    // Mettre à jour le statut à "Supprimé" au lieu de supprimer l'utilisateur
+    $stmt = $bdd->prepare("UPDATE utilisateur SET statut = 'Supprimé' WHERE id_utilisateur = :id_utilisateur");
+    $stmt->execute([':id_utilisateur' => $id_utilisateur]);
+
+    echo "success";
+    exit;
+}
+
 
 $sqlClients = $bdd->query("SELECT id_utilisateur, nom, email, telephone, adresse, statut FROM utilisateur WHERE role = 'CLIENT'");
 $clients = $sqlClients->fetchAll();
@@ -98,9 +79,6 @@ $clients = $sqlClients->fetchAll();
                     <div class="container-fluid flex-grow-1 container-p-y">
                         <div class="d-flex justify-content-between align-items-center mb-4">
                             <h4 class="fw-bold py-3 mb-0">Clients</h4>
-                            <!-- <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addClientModal">
-                                <i class="fas fa-plus"></i> Ajouter
-                            </button> -->
                         </div>
                         <div class="card">
                             <div class="table-responsive text-nowrap">
@@ -127,12 +105,12 @@ $clients = $sqlClients->fetchAll();
                                                 <td><?= htmlspecialchars($client['telephone']) ?></td>
                                                 <td><?= htmlspecialchars($client['adresse']) ?></td>
                                                 <td>
-                                                    <?php
+                                                <?php
                                                     // Ajoutez des classes ou des styles selon le statut
                                                     $statusClass = '';
                                                     $statusText = '';
 
-                                                    switch ($client['statut']) {
+                                                    switch ($client['statut']) { 
                                                         case 'Actif':
                                                             $statusClass = 'text-success';
                                                             $statusText = 'Actif';
@@ -158,19 +136,15 @@ $clients = $sqlClients->fetchAll();
                                                     </a>
                                                     <!-- Bouton pour modifier -->
                                                     <a href="#"
-                                                        onclick="showEditModal('<?= $client['id_utilisateur'] ?>', '<?= $client['nom'] ?>', '<?= $client['email'] ?>', '<?= $client['telephone'] ?>', '<?= $client['adresse'] ?>')"
-                                                        class="text-warning me-2">
-                                                        <i class="fas fa-edit"></i>
+                                                       onclick="showEditModal('<?= $client['id_utilisateur'] ?>', '<?= $client['nom'] ?>', '<?= $client['email'] ?>', '<?= $client['telephone'] ?>', '<?= $client['adresse'] ?>')"
+                                                       class="text-warning me-2">
+                                                        <i class="fas fa-edit text-primary" data-bs-toggle="modal" data-bs-target="#updateClientModal"></i>
                                                     </a>
+                                                    
                                                     <!-- Bouton pour supprimer -->
-                                                    <form action="client.php" method="POST" style="display:inline;">
-                                                        <input type="hidden" name="delete_client"
-                                                            value="<?= $client['id_utilisateur'] ?>">
-                                                        <button type="submit" class="btn btn-link text-danger"
-                                                            onclick="return confirm('Êtes-vous sûr de vouloir supprimer ce client ?')">
-                                                            <i class="fas fa-trash-alt"></i>
-                                                        </button>
-                                                    </form>
+                                                    <a href="#" onclick="markAsDeleted('<?= $client['id_utilisateur'] ?>')" class="text-danger">
+                                                    <i class="fas fa-trash-alt"></i>
+                                                    </a>
                                                 </td>
                                             </tr>
                                         <?php endforeach; ?>
@@ -182,44 +156,6 @@ $clients = $sqlClients->fetchAll();
                 </div>
             </div>
         </div>
-    </div>
-
-    <!-- Modal d'ajout de client -->
-    <div class="modal fade" id="addClientModal" tabindex="-1" aria-hidden="true">
-        <form class="modal-dialog modal-dialog-centered" method="POST">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Ajouter un client</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="nom" class="form-label">Nom</label>
-                        <input type="text" class="form-control" id="nom" name="nom" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="email" class="form-label">Email</label>
-                        <input type="email" class="form-control" id="email" name="email" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="mot_de_passe" class="form-label">Mot de passe</label>
-                        <input type="password" class="form-control" id="mot_de_passe" name="mot_de_passe" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="telephone" class="form-label">Téléphone</label>
-                        <input type="tel" class="form-control" id="telephone" name="telephone" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="adresse" class="form-label">Adresse</label>
-                        <input type="text" class="form-control" id="adresse" name="adresse" required>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
-                    <button class="btn btn-primary" type="submit" name="add_client">Ajouter</button>
-                </div>
-            </div>
-        </form>
     </div>
 
     <!-- Modal de modification de client -->
@@ -259,55 +195,69 @@ $clients = $sqlClients->fetchAll();
 
     <?php include "include/common/script.php"; ?>
     <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            document.querySelectorAll(".toggle-status").forEach(button => {
-                button.addEventListener("click", function(e) {
-                    e.preventDefault();
-                    let userId = this.getAttribute("data-id");
-                    let currentStatus = this.getAttribute("data-status");
-                    let newStatus;
+    // Déjà présent : Gestion des utilisateurs supprimés
+    function markAsDeleted(idUtilisateur) {
+        if (confirm("Êtes-vous sûr de vouloir marquer cet utilisateur comme supprimé ?")) {
+            let formData = new FormData();
+            formData.append("delete_user", idUtilisateur);
 
-                    // Logique pour gérer les trois statuts
-                    if (currentStatus === "Actif") {
-                        newStatus = "Bloqué";
-                    } else if (currentStatus === "Bloqué") {
-                        newStatus = "Supprimé";
-                    } else {
-                        newStatus = "Actif"; // Retourne à "Actif"
-                    }
-
-                    let icon = this.querySelector("i");
-
-                    let formData = new FormData();
-                    formData.append("update_status", true);
-                    formData.append("id_utilisateur", userId);
-                    formData.append("statut", newStatus);
-
-                    fetch("client.php", {
-                            method: "POST",
-                            body: formData
-                        })
-                        .then(response => response.text())
-                        .then(data => {
-                            if (data.trim() === "success") {
-                                this.setAttribute("data-status", newStatus);
-                                icon.classList.toggle("text-success", newStatus === "Actif");
-                                icon.classList.toggle("text-danger", newStatus === "Bloqué");
-                                icon.classList.toggle("text-muted", newStatus ===
-                                    "Supprimé"); // Couleur pour "Supprimé"
-
-                                // Recharge la page après la mise à jour du statut
-                                location.reload();
-                            } else {
-                                alert("Erreur lors de la mise à jour du statut.");
-                            }
-                        })
-                        .catch(error => console.error("Erreur:", error));
-
-                });
+            fetch("utilisateur.php", {
+                method: "POST",
+                body: formData,
+            }).then(response => response.text()).then(data => {
+                if (data === "success") {
+                    location.reload(); // Recharger la page pour voir les changements
+                } else {
+                    alert("Erreur lors de la suppression.");
+                }
             });
+        }
+    }
+
+    // Déjà présent : Préremplir le modal de modification
+    function showEditModal(id, nom, email, telephone, adresse) {
+        document.getElementById("id_utilisateur").value = id;
+        document.getElementById("uNom").value = nom;
+        document.getElementById("uEmail").value = email;
+        document.getElementById("uTelephone").value = telephone;
+        document.getElementById("uAdresse").value = adresse;
+    }
+
+    // Nouveau : Gestion du changement de statut
+    document.querySelectorAll('.toggle-status').forEach(function (element) {
+        element.addEventListener('click', function (e) {
+            e.preventDefault();
+            
+            var idUtilisateur = element.getAttribute('data-id');
+            var statutActuel = element.getAttribute('data-status');
+            var nouveauStatut = (statutActuel === 'Actif') ? 'Bloqué' : 'Actif'; // Alterne entre 'Actif' et 'Bloqué'
+            
+            let formData = new FormData();
+            formData.append("update_status", true);
+            formData.append("id_utilisateur", idUtilisateur);
+            formData.append("statut", nouveauStatut);
+            
+            fetch('utilisateur.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.text())
+            .then(data => {
+                if (data === 'success') {
+                    // Met à jour l'affichage du statut sur la page sans recharger
+                    element.closest('tr').querySelector('td:nth-child(5) span').textContent = nouveauStatut;
+                    element.closest('tr').querySelector('td:nth-child(5) span').className = (nouveauStatut === 'Actif') ? 'text-success' : 'text-danger';
+                    
+                    // Met à jour l'attribut data-status de l'élément cliqué
+                    element.setAttribute('data-status', nouveauStatut);
+                } else {
+                    alert("Erreur lors de la mise à jour du statut.");
+                }
+            })
+            .catch(error => console.error('Erreur : ', error));
         });
-    </script>
+    });
+</script>
 </body>
 
 </html>

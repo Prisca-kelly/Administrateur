@@ -27,7 +27,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_user'])) {
 if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["update_status"])) {
     $statut = $_POST['statut']; // Récupère le statut du formulaire
     $id_utilisateur = $_POST['id_utilisateur'];
-    $statuts_valides = ['Actif', 'Bloqué', 'Supprimé']; // Liste des statuts valides
+    $statuts_valides = ['Actif', 'Bloqué']; // Liste des statuts valides
     if (!in_array($statut, $statuts_valides)) {
         echo "<script>alert('Statut invalide');</script>";
         exit;
@@ -48,14 +48,15 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["update_status"])) {
 // Suppression d'un utilisateur
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_user'])) {
     $id_utilisateur = $_POST['delete_user'];
-    try {
-        $stmt = $bdd->prepare("DELETE FROM utilisateur WHERE id_utilisateur = :id_utilisateur");
-        $stmt->execute([':id_utilisateur' => $id_utilisateur]);
-        echo "<script>alert('Utilisateur supprimé avec succès !');</script>";
-    } catch (PDOException $e) {
-        echo "<script>alert('Erreur lors de la suppression : " . $e->getMessage() . "');</script>";
-    }
+
+    // Mettre à jour le statut à "Supprimé" au lieu de supprimer l'utilisateur
+    $stmt = $bdd->prepare("UPDATE utilisateur SET statut = 'Supprimé' WHERE id_utilisateur = :id_utilisateur");
+    $stmt->execute([':id_utilisateur' => $id_utilisateur]);
+
+    echo "success";
+    exit;
 }
+
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_user'])) {
     $nom = htmlspecialchars($_POST['nom']);
@@ -170,18 +171,8 @@ $users = $sqlUsers->fetchAll();
                                                     </a>
                                                     
                                                     <!-- Bouton pour supprimer -->
-                                                    <form action="utilisateur.php" method="POST" style="display:inline;">
-                                                        <input type="hidden" name="delete_user"
-                                                            value="<?= $user['id_utilisateur'] ?>">
-                                                        <button type="submit" class="btn btn-link text-danger"
-                                                            onclick="return confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ?')">
-                                                            <i class="fas fa-trash-alt"></i>
-                                                        </button>
-                                                    </form>
-                                                    <!-- Ajouter l'icône du cadenas ici -->
-                                                    <a href="#" onclick="toggleLock('<?= $user['id_utilisateur'] ?>')"
-                                                        class="text-info me-2">
-                                                        <i class="fas fa-lock"></i>
+                                                    <a href="#" onclick="markAsDeleted('<?= $user['id_utilisateur'] ?>')" class="text-danger">
+                                                    <i class="fas fa-trash-alt"></i>
                                                     </a>
                                                 </td>
                                             </tr>
@@ -272,58 +263,68 @@ $users = $sqlUsers->fetchAll();
     <?php include "include/common/script.php"; ?>
 
     <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            document.querySelectorAll(".toggle-status").forEach(button => {
-                button.addEventListener("click", function (e) {
-                    e.preventDefault();
-                    let userId = this.getAttribute("data-id");
-                    let currentStatus = this.getAttribute("data-status");
-                    let newStatus;
+    // Gestion des utilisateurs supprimés
+    function markAsDeleted(idUtilisateur) {
+        if (confirm("Êtes-vous sûr de vouloir marquer cet utilisateur comme supprimé ?")) {
+            let formData = new FormData();
+            formData.append("delete_user", idUtilisateur);
 
-            // Logique pour gérer les trois statuts
-            if (currentStatus === "Actif") {
-                newStatus = "Bloqué";
-            } else if (currentStatus === "Bloqué") {
-                newStatus = "Supprimé";
-            } else {
-                newStatus = "Actif"; // Retourne à "Actif"
-            }
+            fetch("utilisateur.php", {
+                method: "POST",
+                body: formData,
+            }).then(response => response.text()).then(data => {
+                if (data === "success") {
+                    location.reload(); // Recharger la page pour voir les changements
+                } else {
+                    alert("Erreur lors de la suppression.");
+                }
+            });
+        }
+    }
 
-            let icon = this.querySelector("i");
+    // Déjà présent : Préremplir le modal de modification
+    function showEditModal(id, nom, email, telephone, adresse) {
+        document.getElementById("id_utilisateur").value = id;
+        document.getElementById("uNom").value = nom;
+        document.getElementById("uEmail").value = email;
+        document.getElementById("uTelephone").value = telephone;
+        document.getElementById("uAdresse").value = adresse;
+    }
 
+    // Nouveau : Gestion du changement de statut
+    document.querySelectorAll('.toggle-status').forEach(function (element) {
+        element.addEventListener('click', function (e) {
+            e.preventDefault();
+            
+            var idUtilisateur = element.getAttribute('data-id');
+            var statutActuel = element.getAttribute('data-status');
+            var nouveauStatut = (statutActuel === 'Actif') ? 'Bloqué' : 'Actif'; // Alterne entre 'Actif' et 'Bloqué'
+            
             let formData = new FormData();
             formData.append("update_status", true);
-            formData.append("id_utilisateur", userId);
-            formData.append("statut", newStatus);
-
-
-                    // Mise à jour du statut via AJAX
-                    fetch("utilisateur.php", {
-                        method: "POST",
-                        body: new URLSearchParams({
-                            "update_status": true,
-                            "id_utilisateur": userId,
-                            "statut": newStatus
-                        }),
-                    }).then(response => response.text()).then(data => {
-                        if (data === "success") {
-                            location.reload(); // Recharger la page après la mise à jour
-                        } else {
-                            alert("Erreur lors de la mise à jour du statut");
-                        }
-                    });
-                });
-            });
+            formData.append("id_utilisateur", idUtilisateur);
+            formData.append("statut", nouveauStatut);
+            
+            fetch('utilisateur.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.text())
+            .then(data => {
+                if (data === 'success') {
+                    // Met à jour l'affichage du statut sur la page sans recharger
+                    element.closest('tr').querySelector('td:nth-child(5) span').textContent = nouveauStatut;
+                    element.closest('tr').querySelector('td:nth-child(5) span').className = (nouveauStatut === 'Actif') ? 'text-success' : 'text-danger';
+                    
+                    // Met à jour l'attribut data-status de l'élément cliqué
+                    element.setAttribute('data-status', nouveauStatut);
+                } else {
+                    alert("Erreur lors de la mise à jour du statut.");
+                }
+            })
+            .catch(error => console.error('Erreur : ', error));
         });
-
-        function showEditModal(id, nom, email, telephone, adresse) {
-            document.getElementById("id_utilisateur").value = id;
-            document.getElementById("uNom").value = nom;
-            document.getElementById("uEmail").value = email;
-            document.getElementById("uTelephone").value = telephone;
-            document.getElementById("uAdresse").value = adresse;
-        }
-    </script>
+    });
+</script>
 </body>
-
 </html>

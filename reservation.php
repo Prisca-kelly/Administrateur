@@ -38,15 +38,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_reservation'])
     echo "<script>alert('Réservation mise à jour avec succès !');</script>";
 }
 
-// Suppression d'une réservation
+// Vérifier si le formulaire de suppression a été soumis
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_reservation'])) {
     $id_reservation = $_POST['delete_reservation'];
+
     try {
-        $stmt = $bdd->prepare("DELETE FROM reservation WHERE id_reservation = :id_reservation");
+        // Vérifier si la réservation existe
+        $stmt = $bdd->prepare("SELECT COUNT(*) FROM reservation WHERE id_reservation = :id_reservation");
         $stmt->execute([':id_reservation' => $id_reservation]);
-        echo "<script>alert('Réservation supprimée avec succès !');</script>";
+        $count = $stmt->fetchColumn();
+
+        // Si la réservation existe, mettre à jour son statut
+        if ($count > 0) {
+            $stmt = $bdd->prepare("UPDATE reservation SET statut = 'supprimé' WHERE id_reservation = :id_reservation");
+            $stmt->execute([':id_reservation' => $id_reservation]);
+            echo "<script>alert('Réservation marquée comme supprimée avec succès !');</script>";
+        } else {
+            echo "<script>alert('Réservation non trouvée !');</script>";
+        }
     } catch (PDOException $e) {
-        echo "<script>alert('Erreur lors de la suppression : " . $e->getMessage() . "');</script>";
+        // Afficher l'erreur détaillée en cas d'exception
+        echo "<script>alert('Erreur lors de la mise à jour : " . htmlspecialchars($e->getMessage()) . "');</script>";
     }
 }
 
@@ -164,18 +176,17 @@ $reservations = $bdd->query("SELECT * FROM reservation")->fetchAll();
                                                         <input type="hidden" name="delete_reservation"
                                                             value="<?= $reservation['id_reservation'] ?>">
                                                         <button type="submit" class="btn btn-link text-danger"
-                                                            onclick="return confirm('Êtes-vous sûr de vouloir supprimer cette réservation ?')">
+                                                            onclick="return confirm('Êtes-vous sûr de vouloir marquer cette réservation comme supprimé?')">
                                                             <i class="fas fa-trash-alt"></i>
                                                         </button>
                                                     </form>
                                                     <!-- Icône pour modifier le statut -->
-    <form action="reservation.php" method="POST" style="display:inline;">
-        <input type="hidden" name="update_status" value="<?= $reservation['id_reservation'] ?>">
-        <button type="submit" class="btn btn-link text-primary" onclick="return confirm('Êtes-vous sûr de vouloir modifier le statut de cette réservation ?')">
-            <i class="fas fa-sync-alt"></i>
-        </button>
-    </form>
-</td>
+                                                    <form action="reservation.php" method="POST" style="display:inline;">
+                                                        <input type="hidden" name="update_status" value="<?= $reservation['id_reservation'] ?>">
+                                                        <button type="submit" class="btn btn-link text-primary" onclick="return confirm('Êtes-vous sûr de vouloir modifier le statut de cette réservation ?')">
+                                                            <i class="fas fa-sync-alt"></i>
+                                                        </button>
+                                                    </form>
                                                 </td>
                                             </tr>
                                         <?php endforeach; ?>
@@ -188,7 +199,6 @@ $reservations = $bdd->query("SELECT * FROM reservation")->fetchAll();
             </div>
         </div>
     </div>
-
     <!-- Modal d'ajout de réservation -->
     <div class="modal fade" id="addReservationModal" tabindex="-1" aria-hidden="true">
         <form class="modal-dialog modal-dialog-centered" method="POST">

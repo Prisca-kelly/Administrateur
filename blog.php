@@ -68,24 +68,18 @@ if (isset($_POST['modifier'])) {
     echo "<script>alert('✅ Article modifié avec succès.'); window.location.href='blog.php';</script>";
 }
 
-// Supprimer un article
+// Changer le statut en "Supprimé" au lieu de supprimer l'article
 if (isset($_POST['delete_article'])) {
     $id_article = $_POST['delete_article'];
 
-    // Supprimer l'image du dossier uploads
-    $image_path = "uploads/" . $_POST['image_old'];
-    if (file_exists($image_path)) {
-        unlink($image_path);
-    }
-
-    // Suppression de l'article de la base de données
-    $sql = "DELETE FROM articleblog WHERE id_article = :id_article";
+    // Met à jour le statut de l'article en "Supprimé"
+    $sql = "UPDATE articleblog SET statut = 'Supprimé' WHERE id_article = :id_article";
     $stmt = $bdd->prepare($sql);
     $stmt->execute([
         ':id_article' => $id_article
     ]);
 
-    echo "<script>alert('✅ Article supprimé avec succès.'); window.location.href='blog.php';</script>";
+    echo "<script>alert('✅ Article marqué comme supprimé.'); window.location.href='blog.php';</script>";
 }
 
 // Changer le statut de l'article
@@ -152,29 +146,28 @@ if (isset($_POST['changer_statut'])) {
                                                 <td><?= htmlspecialchars(substr($article['contenu'], 0, 100)) ?>...</td>
                                                 <td><img src="uploads/<?= htmlspecialchars($article['image']) ?>" width="80"
                                                         height="60"></td>
-                                                <td>
-                                                    <?php if ($article['statut'] == 'publié'): ?>
-                                                        <span>Publié</span>
-                                                    <?php else: ?>
-                                                        <span>Non publié</span>
-                                                    <?php endif; ?>
-                                                </td>
+                                                        <td>
+                                                            <?php if ($article['statut'] == 'publié'): ?>
+                                                              <span>Publié</span>
+                                                            <?php elseif ($article['statut'] == 'non-publié'): ?>
+                                                              <span>Non publié</span>
+                                                            <?php elseif ($article['statut'] == 'supprimé'): ?>
+                                                              <span class="text-danger">Supprimé</span>
+                                                            <?php endif; ?>
+                                                        </td>
                                                 <td>
                                                     <!-- Bouton Modifier -->
-                                                    <button class="btn btn-no-style mx-2" data-bs-toggle="modal"
+                                                    <button class="btn btn-no-style" data-bs-toggle="modal"
                                                         data-bs-target="#editBlogModal<?= $article['id_article'] ?>">
                                                         <i class="fa-solid fa-pen-to-square"></i>
                                                     </button>
 
-                                                    <!-- Bouton Supprimer -->
-                                                    <form action="blog.php" method="POST" style="display:inline;">
-                                                        <input type="hidden" name="delete_article"
-                                                            value="<?= $article['id_article'] ?>">
-                                                        <input type="hidden" name="image_old"
-                                                            value="<?= $article['image'] ?>">
+                                                   <!-- Bouton Marquer comme Supprimé -->
+                                                   <form action="blog.php" method="POST" style="display:inline;">
+                                                        <input type="hidden" name="delete_article" value="<?= $article['id_article'] ?>">
                                                         <button type="submit" class="btn btn-link text-danger"
-                                                            onclick="return confirm('Êtes-vous sûr de vouloir supprimer cet article ?')">
-                                                            <i class="fas fa-trash-alt"></i>
+                                                           onclick="return confirm('Êtes-vous sûr de vouloir marquer cet article comme supprimé ?')">
+                                                           <i class="fas fa-trash-alt"></i>
                                                         </button>
                                                     </form>
 
