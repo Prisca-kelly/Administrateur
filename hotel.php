@@ -117,9 +117,9 @@ $hotels = $bdd->query("SELECT id_hotel, image, nom, description, prix, ville, du
                 <div class="content-wrapper">
                     <div class="container-fluid flex-grow-1 container-p-y">
                         <h4 class="fw-bold py-3 mb-0">Liste des Hôtels</h4>
-
                         <button class="btn btn-primary mb-3" data-bs-toggle="modal"
-                            data-bs-target="#addHotelModal">Ajouter un hôtel</button>
+                            data-bs-target="#addHotelModal">Ajouter un hôtel
+                        </button>
 
                         <div class="card">
                             <div class="table-responsive text-nowrap">

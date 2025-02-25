@@ -55,5 +55,11 @@
                 <div data-i18n="Basic">Utilisateur</div>
             </a>
         </li>
+        <li class="menu-item <?= $page == 'modepaiement' ? 'active' : ''; ?> ">
+            <a href="modepaiement.php" class="menu-link">
+                <i class="menu-icon tf-icons bx bx-wallet"></i>
+                <div data-i18n="Basic">Mode de paiement</div>
+            </a>
+        </li>
     </ul>
 </aside>

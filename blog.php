@@ -285,8 +285,6 @@ if (isset($_POST['changer_statut'])) {
             </div>
         </div>
     </div>
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/js/all.min.js"></script>
     <?php include "include/common/script.php"; ?>
 </body>
 
