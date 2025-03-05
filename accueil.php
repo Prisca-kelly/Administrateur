@@ -23,6 +23,19 @@ function countParStatus($table, $statut): int
     $sql->execute(array($statut));
     return $sql->fetch()["total"];
 }
+
+function getLastReservations()
+{
+    global $bdd;
+    $sql = $bdd->query("SELECT r.date_depart, r.date_retour, u.nom, d.nom AS destination
+                          FROM reservation r
+                          JOIN utilisateur u ON r.id_utilisateur = u.id_utilisateur
+                          JOIN destination d ON r.id_destination = d.id_destination
+                          ORDER BY r.date_creation DESC
+                          LIMIT 6");
+    $sql->execute();
+    return $sql->fetchAll();
+}
 ?>
 <!DOCTYPE html>
 <html lang="fr" class="light-style layout-menu-fixed" dir="ltr" data-theme="theme-default" data-assets-path="assets/"
@@ -102,19 +115,6 @@ function countParStatus($table, $statut): int
                                 <div class="card h-100">
                                     <div class="card-header d-flex justify-content-between">
                                         <span>Taux de reservation de l'année</span>
-                                        <!-- <div class="dropdown">
-                                            <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button"
-                                                id="growthReportId" data-bs-toggle="dropdown" aria-haspopup="true"
-                                                aria-expanded="false">
-                                                2022
-                                            </button>
-                                            <div class="dropdown-menu dropdown-menu-end"
-                                                aria-labelledby="growthReportId">
-                                                <a class="dropdown-item" href="javascript:void(0);">2021</a>
-                                                <a class="dropdown-item" href="javascript:void(0);">2020</a>
-                                                <a class="dropdown-item" href="javascript:void(0);">2019</a>
-                                            </div>
-                                        </div> -->
                                     </div>
                                     <div class="card-body px-0">
                                         <div id="tauxReservations"></div>
@@ -129,110 +129,33 @@ function countParStatus($table, $statut): int
                                         </h5>
                                     </div>
                                     <div class="card-body">
-                                        <ul class="p-0 m-0">
-                                            <li class="d-flex mb-4 pb-1">
-                                                <div
-                                                    class="avatar flex-shrink-0 me-3 bg-label-success d-flex justify-content-center align-items-center">
-                                                    <i class="bx bx-calendar"></i>
-                                                </div>
-                                                <div
-                                                    class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
-                                                    <div class="me-2">
-                                                        <small class="text-muted d-block mb-1">
-                                                            Paris 18/02/2025 - 25/02/2025
-                                                        </small>
-                                                        <h6 class="mb-0">
-                                                            Boris Axel
-                                                        </h6>
-                                                    </div>
-                                                </div>
-                                            </li>
-                                            <li class="d-flex mb-4 pb-1">
-                                                <div
-                                                    class="avatar flex-shrink-0 me-3 bg-label-primary d-flex justify-content-center align-items-center">
-                                                    <i class="bx bx-calendar"></i>
-                                                </div>
-                                                <div
-                                                    class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
-                                                    <div class="me-2">
-                                                        <small class="text-muted d-block mb-1">
-                                                            Paris 18/02/2025 - 25/02/2025
-                                                        </small>
-                                                        <h6 class="mb-0">
-                                                            Boris Axel
-                                                        </h6>
-                                                    </div>
-                                                </div>
-                                            </li>
-                                            <li class="d-flex mb-4 pb-1">
-                                                <div
-                                                    class="avatar flex-shrink-0 me-3 bg-label-warning d-flex justify-content-center align-items-center">
-                                                    <i class="bx bx-calendar"></i>
-                                                </div>
-                                                <div
-                                                    class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
-                                                    <div class="me-2">
-                                                        <small class="text-muted d-block mb-1">
-                                                            Paris 18/02/2025 - 25/02/2025
-                                                        </small>
-                                                        <h6 class="mb-0">
-                                                            Boris Axel
-                                                        </h6>
-                                                    </div>
-                                                </div>
-                                            </li>
-                                            <li class="d-flex mb-4 pb-1">
-                                                <div
-                                                    class="avatar flex-shrink-0 me-3 bg-label-danger d-flex justify-content-center align-items-center">
-                                                    <i class="bx bx-calendar"></i>
-                                                </div>
-                                                <div
-                                                    class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
-                                                    <div class="me-2">
-                                                        <small class="text-muted d-block mb-1">
-                                                            Paris 18/02/2025 - 25/02/2025
-                                                        </small>
-                                                        <h6 class="mb-0">
-                                                            Boris Axel
-                                                        </h6>
-                                                    </div>
-                                                </div>
-                                            </li>
-                                            <li class="d-flex mb-4 pb-1">
-                                                <div
-                                                    class="avatar flex-shrink-0 me-3 bg-label-danger d-flex justify-content-center align-items-center">
-                                                    <i class="bx bx-calendar"></i>
-                                                </div>
-                                                <div
-                                                    class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
-                                                    <div class="me-2">
-                                                        <small class="text-muted d-block mb-1">
-                                                            Paris 18/02/2025 - 25/02/2025
-                                                        </small>
-                                                        <h6 class="mb-0">
-                                                            Boris Axel
-                                                        </h6>
-                                                    </div>
-                                                </div>
-                                            </li>
-                                            <li class="d-flex mb-4 pb-1">
-                                                <div
-                                                    class="avatar flex-shrink-0 me-3 bg-label-warning d-flex justify-content-center align-items-center">
-                                                    <i class="bx bx-calendar"></i>
-                                                </div>
-                                                <div
-                                                    class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
-                                                    <div class="me-2">
-                                                        <small class="text-muted d-block mb-1">
-                                                            Paris 18/02/2025 - 25/02/2025
-                                                        </small>
-                                                        <h6 class="mb-0">
-                                                            Boris Axel
-                                                        </h6>
-                                                    </div>
-                                                </div>
-                                            </li>
-                                        </ul>
+                                    <ul class="p-0 m-0">
+    <?php
+    $lastReservations = getLastReservations();
+    $totalReservations = count($lastReservations);
+    if ($totalReservations > 0) {
+        foreach ($lastReservations as $item) { ?>
+            <li class="d-flex mb-4 pb-1">
+                <div class="avatar flex-shrink-0 me-3 bg-label-success d-flex justify-content-center align-items-center">
+                    <i class="bx bx-calendar"></i>
+                </div>
+                <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
+                    <div class="me-2">
+                        <small class="text-muted d-block mb-1">
+                            <?= $item['destination'] ?> <?= $item['date_depart'] ?> - <?= $item['date_retour'] ?>
+                        </small>
+                        <h6 class="mb-0">
+                            <?= $item['nom'] ?>
+                        </h6>
+                    </div>
+                </div>
+            </li>
+        <?php }
+    } else {
+        echo "<h6 class='text-center'>Aucune réservation enregistrée !</h6>";
+    }
+    ?>
+</ul>
                                     </div>
                                 </div>
                             </div>
@@ -276,63 +199,63 @@ function countParStatus($table, $statut): int
     <script src="assets/js/dashboard.js"></script>
 
     <script>
-    $.ajax({
-        type: "get",
-        url: "model/app/dashboard.php",
-        data: {
-            repatitionReservationParMois: true,
-        },
-        dataType: "text",
-        success: function(response) {
-            let res = JSON.parse(response);
-            let data = {
-                mois: [],
-                number: []
-            };
-            if (res.length > 0) {
-                res.forEach(element => {
-                    data.mois.push(element.month_name);
-                    data.number.push(element.reservation_count);
-                });
-            }
-            repatitionReservationParMois(data.mois, data.number);
-        },
-    });
+        $.ajax({
+            type: "get",
+            url: "model/app/dashboard.php",
+            data: {
+                repatitionReservationParMois: true,
+            },
+            dataType: "text",
+            success: function(response) {
+                let res = JSON.parse(response);
+                let data = {
+                    mois: [],
+                    number: []
+                };
+                if (res.length > 0) {
+                    res.forEach(element => {
+                        data.mois.push(element.month_name);
+                        data.number.push(element.reservation_count);
+                    });
+                }
+                repatitionReservationParMois(data.mois, data.number);
+            },
+        });
 
-    $.ajax({
-        type: "get",
-        url: "model/app/dashboard.php",
-        data: {
-            repatitionReservation: true,
-        },
-        dataType: "text",
-        success: function(response) {
-            let res = JSON.parse(response);
-            let data = {
-                noms: [],
-                number: []
-            };
-            if (res.length > 0) {
-                res.forEach(element => {
-                    data.noms.push(element.nom);
-                    data.number.push(element.count);
-                });
-            }
-            destinationReservation(data)
-        },
-    });
-    $.ajax({
-        type: "get",
-        url: "model/app/dashboard.php",
-        data: {
-            repatitionUtilisateur: true,
-        },
-        dataType: "text",
-        success: function(response) {
-            let res = JSON.parse(response);
-            utilisateurChart(res[0], res[1]);
-        },
-    });
+        $.ajax({
+            type: "get",
+            url: "model/app/dashboard.php",
+            data: {
+                repatitionReservation: true,
+            },
+            dataType: "text",
+            success: function(response) {
+                let res = JSON.parse(response);
+                let data = {
+                    noms: [],
+                    number: []
+                };
+                if (res.length > 0) {
+                    res.forEach(element => {
+                        data.noms.push(element.nom);
+                        data.number.push(element.count);
+                    });
+                }
+                destinationReservation(data)
+            },
+        });
+        $.ajax({
+            type: "get",
+            url: "model/app/dashboard.php",
+            data: {
+                repatitionUtilisateur: true,
+            },
+            dataType: "text",
+            success: function(response) {
+                let res = JSON.parse(response);
+                utilisateurChart(res[0], res[1]);
+            },
+        });
     </script>
 </body>
 

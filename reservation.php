@@ -63,6 +63,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_reservation'])
 }
 
 // Modifier le statut d'une réservation
+// Modifier le statut d'une réservation
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_status'])) {
     $id_reservation = $_POST['update_status'];
     
@@ -71,8 +72,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_status'])) {
     $stmt->execute([':id_reservation' => $id_reservation]);
     $currentStatus = $stmt->fetchColumn();
 
-    // Définir le nouveau statut (changer entre 'nouveau' et 'traité' par exemple)
-    $newStatus = ($currentStatus === 'nouveau') ? 'traité' : 'nouveau';
+    // Définir le nouveau statut en fonction de l'état actuel
+    switch ($currentStatus) {
+        case 'nouveau':
+            $newStatus = 'valide';
+            break;
+        case 'valide':
+            $newStatus = 'rejete';
+            break;
+        case 'rejete':
+            $newStatus = 'payé';
+            break;
+        case 'payé':
+            $newStatus = 'nouveau';
+            break;
+        default:
+            $newStatus = 'nouveau'; // Par défaut si un statut inconnu
+    }
 
     // Mise à jour du statut dans la base de données
     $stmt = $bdd->prepare("UPDATE reservation SET statut = :statut WHERE id_reservation = :id_reservation");
@@ -83,6 +99,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_status'])) {
 
     echo "<script>alert('Statut mis à jour avec succès !');</script>";
 }
+
+
+    // Mise à jour du statut dans la base de données
+    $stmt = $bdd->prepare("UPDATE reservation SET statut = :statut WHERE id_reservation = :id_reservation");
+    $stmt->execute([
+        ':statut' => $newStatus,
+        ':id_reservation' => $id_reservation
+    ]);
+
 
 
 // Ajouter une réservation
@@ -113,7 +138,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_reservation'])) {
     echo "<script>alert('Réservation ajoutée avec succès !');</script>";
 }
 
-$reservations = $bdd->query("SELECT * FROM reservation")->fetchAll();
+$reservations = $bdd->query("SELECT r.*, u.nom AS nom_utilisateur, d.nom AS nom_destination
+                             FROM reservation r
+                             JOIN utilisateur u ON r.id_utilisateur = u.id_utilisateur
+                             JOIN destination d ON r.id_destination = d.id_destination")->fetchAll();
 ?>
 
 <!DOCTYPE html>
@@ -158,8 +186,8 @@ $reservations = $bdd->query("SELECT * FROM reservation")->fetchAll();
                                     <tbody>
                                         <?php foreach ($reservations as $reservation) : ?>
                                             <tr>
-                                                <td><?= htmlspecialchars($reservation['id_utilisateur']) ?></td>
-                                                <td><?= htmlspecialchars($reservation['id_destination']) ?></td>
+                                                <td><?= htmlspecialchars($reservation['nom_utilisateur']) ?></td>
+                                                <td> <?= htmlspecialchars($reservation['nom_destination']) ?></td>
                                                 <td><?= htmlspecialchars($reservation['date_depart']) ?></td>
                                                 <td><?= htmlspecialchars($reservation['date_retour']) ?></td>
                                                 <td><?= htmlspecialchars($reservation['classe_souhaite']) ?></td>
@@ -172,14 +200,6 @@ $reservations = $bdd->query("SELECT * FROM reservation")->fetchAll();
                                                         class="text-warning me-2">
                                                         <i class="fas fa-edit"></i>
                                                     </a>
-                                                    <form action="reservation.php" method="POST" style="display:inline;">
-                                                        <input type="hidden" name="delete_reservation"
-                                                            value="<?= $reservation['id_reservation'] ?>">
-                                                        <button type="submit" class="btn btn-link text-danger"
-                                                            onclick="return confirm('Êtes-vous sûr de vouloir marquer cette réservation comme supprimé?')">
-                                                            <i class="fas fa-trash-alt"></i>
-                                                        </button>
-                                                    </form>
                                                     <!-- Icône pour modifier le statut -->
                                                     <form action="reservation.php" method="POST" style="display:inline;">
                                                         <input type="hidden" name="update_status" value="<?= $reservation['id_reservation'] ?>">
