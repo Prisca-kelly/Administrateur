@@ -54,16 +54,6 @@ function countParStatus($table, $statut): int
                                             </span>
                                             <h5 class="card-title text-primary"><?= countTout("hotel") ?></h5>
                                         </div>
-                                        <div class="d-flex justify-content-between align-items-center mt-1">
-                                            <small class="text-warning">
-                                                <i class="bx bx-show"></i>
-                                                <?= countParStatus("hotel", "inactif") ?>
-                                            </small>
-                                            <small class="text-success">
-                                                <i class="bx bx-show"></i>
-                                                <?= countParStatus("hotel", "actif") ?>
-                                            </small>
-                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -102,16 +92,6 @@ function countParStatus($table, $statut): int
                                                 <span>Blogs</span>
                                             </span>
                                             <h5 class="card-title text-primary"><?= countTout("articleblog") ?></h5>
-                                        </div>
-                                        <div class="d-flex justify-content-between align-items-center mt-1">
-                                            <small class="text-warning">
-                                                <i class="bx bx-show"></i>
-                                                <?= countParStatus("articleblog", "brouillon") ?>
-                                            </small>
-                                            <small class="text-success">
-                                                <i class="bx bx-show"></i>
-                                                <?= countParStatus("articleblog", "publié") ?>
-                                            </small>
                                         </div>
                                     </div>
                                 </div>
@@ -261,7 +241,7 @@ function countParStatus($table, $statut): int
                             <div class="col-lg-8 col-md-6 mb-4">
                                 <div class="card h-100">
                                     <div class="card-header d-flex justify-content-between">
-                                        <span>Taux de reservation de l'année</span>
+                                        <span>Taux de reservations par destination</span>
                                     </div>
                                     <div class="card-body px-0">
                                         <div id="chartHotel"></div>
@@ -272,7 +252,7 @@ function countParStatus($table, $statut): int
                             <div class="col-lg-4 col-md-6 mb-4">
                                 <div class="card h-100">
                                     <div class="card-header d-flex justify-content-between">
-                                        <span>Taux de reservation de l'année</span>
+                                        <span>Répartition des utilisateurs</span>
                                     </div>
                                     <div class="card-body px-0">
                                         <div id="repartitionUtilisateurs"></div>
@@ -294,6 +274,66 @@ function countParStatus($table, $statut): int
     <script src="assets/vendor/libs/apex-charts/apexcharts.js"></script>
     <script src="assets/js/main.js"></script>
     <script src="assets/js/dashboard.js"></script>
+
+    <script>
+    $.ajax({
+        type: "get",
+        url: "model/app/dashboard.php",
+        data: {
+            repatitionReservationParMois: true,
+        },
+        dataType: "text",
+        success: function(response) {
+            let res = JSON.parse(response);
+            let data = {
+                mois: [],
+                number: []
+            };
+            if (res.length > 0) {
+                res.forEach(element => {
+                    data.mois.push(element.month_name);
+                    data.number.push(element.reservation_count);
+                });
+            }
+            repatitionReservationParMois(data.mois, data.number);
+        },
+    });
+
+    $.ajax({
+        type: "get",
+        url: "model/app/dashboard.php",
+        data: {
+            repatitionReservation: true,
+        },
+        dataType: "text",
+        success: function(response) {
+            let res = JSON.parse(response);
+            let data = {
+                noms: [],
+                number: []
+            };
+            if (res.length > 0) {
+                res.forEach(element => {
+                    data.noms.push(element.nom);
+                    data.number.push(element.count);
+                });
+            }
+            destinationReservation(data)
+        },
+    });
+    $.ajax({
+        type: "get",
+        url: "model/app/dashboard.php",
+        data: {
+            repatitionUtilisateur: true,
+        },
+        dataType: "text",
+        success: function(response) {
+            let res = JSON.parse(response);
+            utilisateurChart(res[0], res[1]);
+        },
+    });
+    </script>
 </body>
 
 </html>
