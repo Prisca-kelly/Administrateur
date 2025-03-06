@@ -30,71 +30,6 @@ if (isset($_POST['add_hotel'])) {
     }
 }
 
-// Suppression d'un hôtel
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_hotel'])) {
-    $id_hotel = $_POST['delete_hotel'];
-
-    // Mettre à jour le statut à "Supprimé" au lieu de supprimer l'hôtel
-    $stmt = $bdd->prepare("UPDATE hotel SET statut = 'Supprimé' WHERE id_hotel = :id_hotel");
-    $stmt->execute([':id_hotel' => $id_hotel]);
-
-    echo "success";
-    exit;
-}
-
-
-// Modification d'un hôtel
-if (isset($_POST['edit_hotel'])) {
-    $id_hotel = $_POST['id_hotel'];
-    $nom = $_POST['nom'];
-    $description = $_POST['description'];
-    $prix = $_POST['prix'];
-    $ville = $_POST['ville'];
-    $dure = $_POST['dure'];
-    $image = $_FILES['image']['name'];
-
-    // Gestion de l'upload d'image
-    if (!empty($image)) {
-        $target_dir = "uploads/";
-        $target_file = $target_dir . basename($image);
-        move_uploaded_file($_FILES['image']['tmp_name'], $target_file);
-        $image_query = ", image = ?";
-        $image_value = $target_file;
-    } else {
-        $image_query = "";
-        $image_value = null;
-    }
-
-    // Mise à jour de l'hôtel dans la base de données
-    $query = $bdd->prepare("UPDATE hotel SET nom = ?, description = ?, prix = ?, ville = ?, dure = ? $image_query WHERE id_hotel = ?");
-    $params = [$nom, $description, $prix, $ville, $dure];
-
-    if ($image_query) {
-        $params[] = $image_value;
-    }
-
-    $params[] = $id_hotel;
-    $query->execute($params);
-
-    // Redirection après modification
-    header("Location: hotel.php");
-    exit();
-}
-
-// Changer le statut de l'hôtel
-if (isset($_POST['change_status'])) {
-    $id_hotel = $_POST['id_hotel'];
-    $statut = $_POST['statut'] == 'activé' ? 'désactivé' : 'activé'; // Bascule le statut
-
-    // Mise à jour du statut dans la base de données
-    $query = $bdd->prepare("UPDATE hotel SET statut = ? WHERE id_hotel = ?");
-    $query->execute([$statut, $id_hotel]);
-
-    // Redirection après changement de statut
-    header("Location: hotel.php");
-    exit();
-}
-
 // Récupération des hôtels depuis la base de données
 $hotels = $bdd->query("SELECT id_hotel, image, nom, description, prix, ville, dure, statut FROM hotel")->fetchAll();
 ?>
@@ -138,68 +73,93 @@ $hotels = $bdd->query("SELECT id_hotel, image, nom, description, prix, ville, du
                                     </thead>
                                     <tbody>
                                         <?php foreach ($hotels as $hotel) : ?>
-                                            <tr>
-                                                <td>
-                                                    <img src="<?= htmlspecialchars($hotel['image']) ?>"
-                                                        alt="Image de l'hôtel"
-                                                        style="width: 80px; height: 60px; object-fit: cover;">
-                                                </td>
-                                                <td><?= htmlspecialchars($hotel['nom']) ?></td>
-                                                <td><?= htmlspecialchars($hotel['description']) ?></td>
-                                                <td><?= htmlspecialchars($hotel['prix']) ?>€</td>
-                                                <td><?= htmlspecialchars($hotel['ville']) ?></td>
-                                                <td><?= htmlspecialchars($hotel['dure']) ?> jours</td>
-                                                <td><?= htmlspecialchars($hotel['statut']) ?></td>
-                                                <td>
-                                                    <?php
+                                        <tr>
+                                            <td>
+                                                <img src="<?= htmlspecialchars($hotel['image']) ?>"
+                                                    alt="Image de l'hôtel"
+                                                    style="width: 80px; height: 60px; object-fit: cover;">
+                                            </td>
+                                            <td><?= htmlspecialchars($hotel['nom']) ?></td>
+                                            <td><?= htmlspecialchars($hotel['description']) ?></td>
+                                            <td><?= htmlspecialchars($hotel['prix']) ?>€</td>
+                                            <td><?= htmlspecialchars($hotel['ville']) ?></td>
+                                            <td><?= htmlspecialchars($hotel['dure']) ?> jours</td>
+                                            <td>
+                                                <?php
                                                     // Ajoutez des classes ou des styles selon le statut de l'hôtel
                                                     $statusClass = '';
                                                     $statusText = '';
 
                                                     switch ($hotel['statut']) {
-                                                        case 'Activé':
+                                                        case 'activé':
                                                             $statusClass = 'text-success';
                                                             $statusText = 'Activé';
                                                             break;
-                                                        case 'Désactivé':
+                                                        case 'désactivé':
                                                             $statusClass = 'text-danger';
                                                             $statusText = 'Désactivé';
                                                             break;
-                                                        case 'Supprimé':
+                                                        case 'supprimé':
                                                             $statusClass = 'text-muted';
                                                             $statusText = 'Supprimé';
                                                             break;
                                                     }
                                                     ?>
-                                                    <span class="<?= $statusClass ?>"><?= $statusText ?></span>
-                                                </td>
+                                                <span class="<?= $statusClass ?>"><?= $statusText ?></span>
+                                            </td>
 
-                                                <td>
-                                                    <!-- Bouton pour changer le statut -->
-                                                    <form action="hotel.php" method="POST" style="display:inline;">
-                                                        <input type="hidden" name="id_hotel"
-                                                            value="<?= $hotel['id_hotel'] ?>">
-                                                        <input type="hidden" name="statut" value="<?= $hotel['statut'] ?>">
-                                                        <button type="submit" name="change_status"
-                                                            class="btn btn-link text-warning">
-                                                            <i
-                                                                class="fas <?= $hotel['statut'] == 'activé' ? 'fa-toggle-on' : 'fa-toggle-off' ?>"></i>
-                                                        </button>
-                                                    </form>
+                                            <td class="justify-content-start">
+                                                <!-- Bouton pour ouvrir le modal de modification -->
 
-                                                    <!-- Bouton pour ouvrir le modal de modification -->
-                                                    <button class="btn btn-link text-primary"
-                                                        onclick="editHotelModal('<?= $hotel['id_hotel'] ?>', '<?= htmlspecialchars($hotel['nom']) ?>', '<?= htmlspecialchars($hotel['description']) ?>', '<?= htmlspecialchars($hotel['prix']) ?>', '<?= htmlspecialchars($hotel['ville']) ?>', '<?= htmlspecialchars($hotel['dure']) ?>', '<?= htmlspecialchars($hotel['image']) ?>')">
-                                                        <i class="fas fa-edit"></i>
-                                                    </button>
+                                                <?php
+                                                    if ($hotel['statut'] == "activé") { ?>
+                                                <a href="#!" data-bs-toggle="tooltip" data-bs-placement="right"
+                                                    title="Modifier" class="text-primary me-2"
+                                                    onclick='editHotelModal("<?= addslashes(json_encode($hotel)); ?>")'>
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                <a href="#!" data-bs-toggle="tooltip" data-bs-placement="right"
+                                                    title="Désactiver"
+                                                    onclick="updateStatus('<?= $hotel['id_hotel'] ?>', 'désactivé')"
+                                                    class="text-warning me-2">
+                                                    <i class="fas fa-lock"></i>
+                                                </a>
+                                                <a href="#!" data-bs-toggle="tooltip" data-bs-placement="right"
+                                                    title="Supprimer"
+                                                    onclick="updateStatus('<?= $hotel['id_hotel'] ?>', 'supprimé')"
+                                                    class="text-danger me-2">
+                                                    <i class="fas fa-trash-alt"></i>
+                                                </a>
+                                                <?php } elseif ($hotel['statut'] == "désactivé") { ?>
+                                                <a href="#!" data-bs-toggle="tooltip" data-bs-placement="right"
+                                                    title="Modifier" class="text-primary me-2"
+                                                    onclick='editHotelModal("<?= addslashes(json_encode($hotel)); ?>")'>
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                <a href="#!" data-bs-toggle="tooltip" data-bs-placement="right"
+                                                    title="Activer"
+                                                    onclick="updateStatus('<?= $hotel['id_hotel'] ?>',  'activé')"
+                                                    class="text-success me-2">
+                                                    <i class="fas fa-lock-open"></i>
+                                                </a>
+                                                <a href="#!" data-bs-toggle="tooltip" data-bs-placement="right"
+                                                    title="Supprimer"
+                                                    onclick="updateStatus('<?= $hotel['id_hotel'] ?>', 'supprimé')"
+                                                    class="text-danger me-2">
+                                                    <i class="fas fa-trash-alt"></i>
+                                                </a>
+                                                <?php } else { ?>
+                                                <a href="#!" data-bs-toggle="tooltip" data-bs-placement="right"
+                                                    title="Activer"
+                                                    onclick="updateStatus('<?= $hotel['id_hotel'] ?>', 'activé')"
+                                                    class="text-success me-2">
+                                                    <i class="fas fa-lock-open"></i>
+                                                </a>
+                                                <?php }
 
-                                                    <!-- Bouton pour supprimer un hôtel -->
-                                                    <a href="#" onclick="markHotelAsDeleted('<?= $hotel['id_hotel'] ?>')"
-                                                        class="text-danger">
-                                                        <i class="fas fa-trash-alt"></i>
-                                                    </a>
-                                                </td>
-                                            </tr>
+                                                    ?>
+                                            </td>
+                                        </tr>
                                         <?php endforeach; ?>
                                     </tbody>
                                 </table>
@@ -241,10 +201,6 @@ $hotels = $bdd->query("SELECT id_hotel, image, nom, description, prix, ville, du
                             <label for="dure" class="form-label">Durée (en jours)</label>
                             <input type="number" class="form-control" id="dure" name="dure" required>
                         </div>
-                        <div class="mb-3">
-                            <label for="image" class="form-label">Image</label>
-                            <input type="file" class="form-control" id="image" name="image" required>
-                        </div>
                         <button type="submit" class="btn btn-primary" name="add_hotel">Ajouter</button>
                     </form>
                 </div>
@@ -261,7 +217,7 @@ $hotels = $bdd->query("SELECT id_hotel, image, nom, description, prix, ville, du
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <form action="hotel.php" method="POST" enctype="multipart/form-data">
+                    <form method="POST">
                         <input type="hidden" id="id_hotel" name="id_hotel">
                         <div class="mb-3">
                             <label for="edit_nom" class="form-label">Nom</label>
@@ -283,92 +239,80 @@ $hotels = $bdd->query("SELECT id_hotel, image, nom, description, prix, ville, du
                             <label for="edit_dure" class="form-label">Durée (en jours)</label>
                             <input type="number" class="form-control" id="edit_dure" name="dure" required>
                         </div>
-                        <div class="mb-3">
-                            <label for="edit_image" class="form-label">Image</label>
-                            <input type="file" class="form-control" id="edit_image" name="image">
-                        </div>
-                        <button type="submit" class="btn btn-primary" name="edit_hotel">Modifier</button>
+                        <button type="button" class="btn btn-primary" id="edit_hotel" value="">Modifier</button>
                     </form>
                 </div>
             </div>
         </div>
     </div>
 
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <?php include "include/common/script.php"; ?>
     <script>
-        // Gestion des hôtels supprimés
-        function markHotelAsDeleted(idHotel) {
-            if (confirm("Êtes-vous sûr de vouloir marquer cet hôtel comme supprimé ?")) {
-                let formData = new FormData();
-                formData.append("delete_hotel", idHotel);
+    function editHotelModal(hotel) {
+        let value = JSON.parse(hotel);
 
-                fetch("hotel.php", {
-                    method: "POST",
-                    body: formData,
-                }).then(response => response.text()).then(data => {
-                    if (data === "success") {
-                        location.reload(); // Recharger la page pour voir les changements
-                    } else {
-                        alert("Erreur lors de la suppression de l'hôtel.");
+        document.getElementById("id_hotel").value = value.id_hotel;
+        document.getElementById("edit_nom").value = value.nom;
+        document.getElementById("edit_description").value = value.description;
+        document.getElementById("edit_prix").value = value.prix;
+        document.getElementById("edit_ville").value = value.ville;
+        document.getElementById("edit_dure").value = value.dure;
+        $('#editHotelModal').modal('show');
+    }
+
+    $("#edit_hotel").click((e) => {
+        e.preventDefault();
+        let data = {
+            id_hotel: $("#id_hotel").val(),
+            nom: $("#edit_nom").val(),
+            description: $("#edit_description").val(),
+            prix: $("#edit_prix").val(),
+            ville: $("#edit_ville").val(),
+            dure: $("#edit_dure").val(),
+            edit_hotel: "edit_hotel"
+        }
+        $.ajax({
+            type: "post",
+            url: "model/app/hotel.php",
+            data: data,
+            dataType: "text",
+            success: function(response) {
+                let res = JSON.parse(response);
+                if (res.code === 200) {
+                    $('#editHotelModal').modal('hide');
+                    successSweetAlert(res.message);
+                } else if (res.code === 400 || res.code === 500) {
+                    errorSweetAlert(res.message);
+                }
+            }
+        });
+    })
+
+    function updateStatus(id, status) {
+        let verbe = status == "activé" ? "activer" : status == "désactivé" ? "désactiver" : "supprimer";
+        confirmSweetAlert("Voulez-vous vraiment " + verbe + " cet hôtel ?").then((out) => {
+            if (out.isConfirmed) {
+                $.ajax({
+                    type: "post",
+                    url: "model/app/hotel.php",
+                    data: {
+                        id_hotel: id,
+                        status: status,
+                        updateStatus: "updateStatus"
+                    },
+                    dataType: "text",
+                    success: function(response) {
+                        let res = JSON.parse(response);
+                        if (res.code === 200) {
+                            successSweetAlert(res.message);
+                        } else if (res.code === 400 || res.code === 500) {
+                            errorSweetAlert(res.message);
+                        }
                     }
                 });
             }
-        }
-
-        function editHotelModal(id, nom, description, prix, ville, dure, image) {
-            console.log(id, nom, description, prix, ville, dure, image); // Pour déboguer
-
-            // Préremplir le modal avec les informations de l'hôtel
-            document.getElementById("id_hotel").value = id;
-            document.getElementById("edit_nom").value = nom;
-            document.getElementById("edit_description").value = description;
-            document.getElementById("edit_prix").value = prix;
-            document.getElementById("edit_ville").value = ville;
-            document.getElementById("edit_dure").value = dure;
-            document.getElementById("edit_image").value = image;
-
-            // Ouvrir le modal d'édition
-            $('#editHotelModal').modal('show');
-        }
-
-        // Gestion du changement de statut de l'hôtel
-        document.querySelectorAll('.toggle-hotel-status').forEach(function(element) {
-            element.addEventListener('click', function(e) {
-                e.preventDefault();
-
-                var idHotel = element.getAttribute('data-id');
-                var statutActuel = element.getAttribute('data-status');
-                var nouveauStatut = (statutActuel === 'Activé') ? 'Désactivé' :
-                    'Activé'; // Alterne entre 'Activé' et 'Désactivé'
-
-                let formData = new FormData();
-                formData.append("update_hotel_status", true);
-                formData.append("id_hotel", idHotel);
-                formData.append("statut", nouveauStatut);
-
-                fetch('hotel.php', {
-                        method: 'POST',
-                        body: formData
-                    })
-                    .then(response => response.text())
-                    .then(data => {
-                        if (data === 'success') {
-                            // Met à jour l'affichage du statut sur la page sans recharger
-                            element.closest('tr').querySelector('td:nth-child(5) span').textContent =
-                                nouveauStatut;
-                            element.closest('tr').querySelector('td:nth-child(5) span').className = (
-                                nouveauStatut === 'Activé') ? 'text-success' : 'text-danger';
-
-                            // Met à jour l'attribut data-status de l'élément cliqué
-                            element.setAttribute('data-status', nouveauStatut);
-                        } else {
-                            alert("Erreur lors de la mise à jour du statut de l'hôtel.");
-                        }
-                    })
-                    .catch(error => console.error('Erreur : ', error));
-            });
-        });
+        })
+    }
     </script>
 
 </body>

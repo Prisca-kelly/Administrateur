@@ -119,45 +119,45 @@ $reservations = $bdd->query("SELECT r.*, u.nom AS nom_utilisateur, d.nom AS nom_
                                     </thead>
                                     <tbody>
                                         <?php foreach ($reservations as $reservation) : ?>
-                                            <tr>
-                                                <td><?= htmlspecialchars($reservation['nom_utilisateur']) ?></td>
-                                                <td> <?= htmlspecialchars($reservation['nom_destination']) ?></td>
-                                                <td>
-                                                    <span class="text-info">
-                                                        <?= htmlspecialchars($reservation['date_depart']) ?>
-                                                    </span> <br>
-                                                    <span class="text-warning">
-                                                        <?= htmlspecialchars($reservation['date_retour']) ?>
-                                                    </span>
-                                                </td>
-                                                <td><?= htmlspecialchars($reservation['classe_souhaite']) ?></td>
-                                                <td><?= htmlspecialchars($reservation['nombre_passager']) ?></td>
-                                                <td><?= htmlspecialchars($reservation['statut']) ?></td>
-                                                <td>
+                                        <tr>
+                                            <td><?= htmlspecialchars($reservation['nom_utilisateur']) ?></td>
+                                            <td> <?= htmlspecialchars($reservation['nom_destination']) ?></td>
+                                            <td>
+                                                <span class="text-info">
+                                                    <?= htmlspecialchars($reservation['date_depart']) ?>
+                                                </span> <br>
+                                                <span class="text-warning">
+                                                    <?= htmlspecialchars($reservation['date_retour']) ?>
+                                                </span>
+                                            </td>
+                                            <td><?= htmlspecialchars($reservation['classe_souhaite']) ?></td>
+                                            <td><?= htmlspecialchars($reservation['nombre_passager']) ?></td>
+                                            <td><?= htmlspecialchars($reservation['statut']) ?></td>
+                                            <td>
 
-                                                    <button type="submit" class="btn btn-link text-info"
-                                                        onclick="detail(<?= json_encode($reservation) ?>)">
-                                                        <i class="fas fa-eye"></i>
-                                                    </button>
-                                                    <?php
+                                                <button type="submit" class="btn btn-link text-info"
+                                                    onclick="detail(<?= json_encode($reservation) ?>)">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                                <?php
                                                     if ($reservation['statut'] === 'nouveau') { ?>
-                                                        <a href="#!"
-                                                            onclick="showEditModal('<?= $reservation['id_reservation'] ?>', '<?= $reservation['id_utilisateur'] ?>', '<?= $reservation['id_destination'] ?>', '<?= $reservation['date_depart'] ?>', '<?= $reservation['date_retour'] ?>', '<?= $reservation['classe_souhaite'] ?>', '<?= $reservation['nombre_passager'] ?>', '<?= $reservation['remarques'] ?>')"
-                                                            class="text-warning me-2">
-                                                            <i class="fas fa-edit"></i>
-                                                        </a>
-                                                        <a href="#!" class="text-success me-2"
-                                                            onclick="updateStatus(<?= $reservation['id_reservation'] ?>, 'validé')">
-                                                            <i class="fas fa-check"></i>
-                                                        </a>
-                                                        <a href="#!" class="text-danger me-2"
-                                                            onclick="updateStatus(<?= $reservation['id_reservation'] ?>, 'Rejetée')">
-                                                            <i class="fas fa-times"></i>
-                                                        </a>
-                                                    <?php }
+                                                <a href="#!"
+                                                    onclick="showEditModal('<?= $reservation['id_reservation'] ?>', '<?= $reservation['id_utilisateur'] ?>', '<?= $reservation['id_destination'] ?>', '<?= $reservation['date_depart'] ?>', '<?= $reservation['date_retour'] ?>', '<?= $reservation['classe_souhaite'] ?>', '<?= $reservation['nombre_passager'] ?>', '<?= $reservation['remarques'] ?>')"
+                                                    class="text-warning me-2">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                <a href="#!" class="text-success me-2"
+                                                    onclick="updateStatus(<?= $reservation['id_reservation'] ?>, 'validé')">
+                                                    <i class="fas fa-check"></i>
+                                                </a>
+                                                <a href="#!" class="text-danger me-2"
+                                                    onclick="updateStatus(<?= $reservation['id_reservation'] ?>, 'Rejetée')">
+                                                    <i class="fas fa-times"></i>
+                                                </a>
+                                                <?php }
                                                     ?>
-                                                </td>
-                                            </tr>
+                                            </td>
+                                        </tr>
                                         <?php endforeach; ?>
                                     </tbody>
                                 </table>
@@ -263,49 +263,49 @@ $reservations = $bdd->query("SELECT r.*, u.nom AS nom_utilisateur, d.nom AS nom_
 
     <?php include "include/common/script.php"; ?>
     <script>
-        function showEditModal(id, utilisateur, destination, depart, retour, classe, passager, remarques) {
-            console.log(id, utilisateur, destination, depart, retour, classe, passager,
-                remarques); // Ajoutez cette ligne pour déboguer
-            document.getElementById('id_reservation').value = id;
-            document.getElementById('uIdUtilisateur').value = utilisateur;
-            document.getElementById('uIdDestination').value = destination;
-            document.getElementById('uDateDepart').value = depart;
-            document.getElementById('uDateRetour').value = retour;
-            document.getElementById('uClasseSouhaite').value = classe;
-            document.getElementById('uNombrePassager').value = passager;
-            document.getElementById('uRemarques').value = remarques;
-            var modal = new bootstrap.Modal(document.getElementById('updateReservationModal'));
-            modal.show();
-        }
+    function showEditModal(id, utilisateur, destination, depart, retour, classe, passager, remarques) {
+        console.log(id, utilisateur, destination, depart, retour, classe, passager,
+            remarques); // Ajoutez cette ligne pour déboguer
+        document.getElementById('id_reservation').value = id;
+        document.getElementById('uIdUtilisateur').value = utilisateur;
+        document.getElementById('uIdDestination').value = destination;
+        document.getElementById('uDateDepart').value = depart;
+        document.getElementById('uDateRetour').value = retour;
+        document.getElementById('uClasseSouhaite').value = classe;
+        document.getElementById('uNombrePassager').value = passager;
+        document.getElementById('uRemarques').value = remarques;
+        var modal = new bootstrap.Modal(document.getElementById('updateReservationModal'));
+        modal.show();
+    }
 
-        function detail(reservation) {
-            console.log(reservation);
-        }
+    function detail(reservation) {
+        console.log(reservation);
+    }
 
-        function updateStatus(id, status) {
-            confirmSweetAlert("Voulez-vous vraiment effectuer cette action ?").then((out) => {
-                if (out.isConfirmed) {
-                    $.ajax({
-                        type: "post",
-                        url: "model/app/reservation.php",
-                        data: {
-                            id_reservation: id,
-                            status: status,
-                            updateStatus: "updateStatus"
-                        },
-                        dataType: "text",
-                        success: function(response) {
-                            let res = JSON.parse(response);
-                            if (res.code === 200) {
-                                successSweetAlert(res.message);
-                            } else if (res.code === 400 || res.code === 500) {
-                                errorSweetAlert(res.message);
-                            }
+    function updateStatus(id, status) {
+        confirmSweetAlert("Voulez-vous vraiment effectuer cette action ?").then((out) => {
+            if (out.isConfirmed) {
+                $.ajax({
+                    type: "post",
+                    url: "model/app/reservation.php",
+                    data: {
+                        id_reservation: id,
+                        status: status,
+                        updateStatus: "updateStatus"
+                    },
+                    dataType: "text",
+                    success: function(response) {
+                        let res = JSON.parse(response);
+                        if (res.code === 200) {
+                            successSweetAlert(res.message);
+                        } else if (res.code === 400 || res.code === 500) {
+                            errorSweetAlert(res.message);
                         }
-                    });
-                }
-            })
-        }
+                    }
+                });
+            }
+        });
+    }
     </script>
 </body>
 
