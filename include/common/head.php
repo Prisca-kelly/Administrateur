@@ -17,3 +17,4 @@
 <script src="assets/vendor/js/helpers.js"></script>
 
 <script src="assets/js/config.js"></script>
+<link href="assets/css/sweetalert2.min.css" rel="stylesheet" type="text/css" />
