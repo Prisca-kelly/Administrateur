@@ -10,6 +10,21 @@ function confirmSweetAlert(msg = "") {
   });
 }
 
+function confirmInputSweetAlert(msg = "") {
+  return Swal.fire({
+    title: "Confirmation",
+    text: msg,
+    input:"number",
+    inputAttributes: {
+      min: 0
+    },
+    showConfirmButton: true,
+    showDenyButton: true,
+    confirmButtonText: "Valider",
+    denyButtonText: "Annuler",
+  });
+}
+
 function successSweetAlert(msg = "", timer = 2000) {
   Swal.fire({
     icon: "success",

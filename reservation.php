@@ -12,8 +12,6 @@ $page = "Réservation";  // Page actuelle
 // Mise à jour des informations d'une réservation
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_reservation'])) {
     $id_reservation = $_POST['id_reservation']; // Récupérer l'id de la réservation à mettre à jour
-    $id_utilisateur = $_POST['id_utilisateur'];
-    $id_destination = $_POST['id_destination'];
     $date_depart = $_POST['date_depart'];
     $date_retour = $_POST['date_retour'];
     $classe_souhaite = $_POST['classe_souhaite'];
@@ -22,17 +20,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_reservation'])
 
     // Utiliser UPDATE pour modifier une réservation existante
     $stmt = $bdd->prepare("UPDATE reservation 
-                           SET id_utilisateur = :id_utilisateur, 
-                               id_destination = :id_destination, 
-                               date_depart = :date_depart, 
+                           SET date_depart = :date_depart, 
                                date_retour = :date_retour, 
                                classe_souhaite = :classe_souhaite, 
                                nombre_passager = :nombre_passager, 
                                remarques = :remarques
                            WHERE id_reservation = :id_reservation");
     $stmt->execute([
-        ':id_utilisateur' => $id_utilisateur,
-        ':id_destination' => $id_destination,
         ':date_depart' => $date_depart,
         ':date_retour' => $date_retour,
         ':classe_souhaite' => $classe_souhaite,
@@ -119,45 +113,45 @@ $reservations = $bdd->query("SELECT r.*, u.nom AS nom_utilisateur, d.nom AS nom_
                                     </thead>
                                     <tbody>
                                         <?php foreach ($reservations as $reservation) : ?>
-                                        <tr>
-                                            <td><?= htmlspecialchars($reservation['nom_utilisateur']) ?></td>
-                                            <td> <?= htmlspecialchars($reservation['nom_destination']) ?></td>
-                                            <td>
-                                                <span class="text-info">
-                                                    <?= htmlspecialchars($reservation['date_depart']) ?>
-                                                </span> <br>
-                                                <span class="text-warning">
-                                                    <?= htmlspecialchars($reservation['date_retour']) ?>
-                                                </span>
-                                            </td>
-                                            <td><?= htmlspecialchars($reservation['classe_souhaite']) ?></td>
-                                            <td><?= htmlspecialchars($reservation['nombre_passager']) ?></td>
-                                            <td><?= htmlspecialchars($reservation['statut']) ?></td>
-                                            <td>
+                                            <tr>
+                                                <td><?= htmlspecialchars($reservation['nom_utilisateur']) ?></td>
+                                                <td> <?= htmlspecialchars($reservation['nom_destination']) ?></td>
+                                                <td>
+                                                    <span class="text-info">
+                                                        <?= htmlspecialchars($reservation['date_depart']) ?>
+                                                    </span> <br>
+                                                    <span class="text-warning">
+                                                        <?= htmlspecialchars($reservation['date_retour']) ?>
+                                                    </span>
+                                                </td>
+                                                <td><?= htmlspecialchars($reservation['classe_souhaite']) ?></td>
+                                                <td><?= htmlspecialchars($reservation['nombre_passager']) ?></td>
+                                                <td style="text-transform: uppercase;"><?= htmlspecialchars($reservation['statut']) ?></td>
+                                                <td>
 
-                                                <button type="submit" class="btn btn-link text-info"
-                                                    onclick="detail(<?= json_encode($reservation) ?>)">
-                                                    <i class="fas fa-eye"></i>
-                                                </button>
-                                                <?php
+                                                    <button type="submit" class="btn btn-link text-info"
+                                                        onclick="detail(<?= $reservation['id_reservation'] ?>)">
+                                                        <i class="fas fa-eye"></i>
+                                                    </button>
+                                                    <?php
                                                     if ($reservation['statut'] === 'nouveau') { ?>
-                                                <a href="#!"
-                                                    onclick="showEditModal('<?= $reservation['id_reservation'] ?>', '<?= $reservation['id_utilisateur'] ?>', '<?= $reservation['id_destination'] ?>', '<?= $reservation['date_depart'] ?>', '<?= $reservation['date_retour'] ?>', '<?= $reservation['classe_souhaite'] ?>', '<?= $reservation['nombre_passager'] ?>', '<?= $reservation['remarques'] ?>')"
-                                                    class="text-warning me-2">
-                                                    <i class="fas fa-edit"></i>
-                                                </a>
-                                                <a href="#!" class="text-success me-2"
-                                                    onclick="updateStatus(<?= $reservation['id_reservation'] ?>, 'validé')">
-                                                    <i class="fas fa-check"></i>
-                                                </a>
-                                                <a href="#!" class="text-danger me-2"
-                                                    onclick="updateStatus(<?= $reservation['id_reservation'] ?>, 'Rejetée')">
-                                                    <i class="fas fa-times"></i>
-                                                </a>
-                                                <?php }
+                                                        <a href="#!"
+                                                            onclick="showEditModal('<?= $reservation['id_reservation'] ?>', '<?= $reservation['id_utilisateur'] ?>', '<?= $reservation['id_destination'] ?>', '<?= $reservation['date_depart'] ?>', '<?= $reservation['date_retour'] ?>', '<?= $reservation['classe_souhaite'] ?>', '<?= $reservation['nombre_passager'] ?>', '<?= $reservation['remarques'] ?>')"
+                                                            class="text-warning me-2">
+                                                            <i class="fas fa-edit"></i>
+                                                        </a>
+                                                        <a href="#!" class="text-success me-2"
+                                                            onclick="updateStatus(<?= $reservation['id_reservation'] ?>, 'validée')">
+                                                            <i class="fas fa-check"></i>
+                                                        </a>
+                                                        <a href="#!" class="text-danger me-2"
+                                                            onclick="updateStatus(<?= $reservation['id_reservation'] ?>, 'rejetée')">
+                                                            <i class="fas fa-times"></i>
+                                                        </a>
+                                                    <?php }
                                                     ?>
-                                            </td>
-                                        </tr>
+                                                </td>
+                                            </tr>
                                         <?php endforeach; ?>
                                     </tbody>
                                 </table>
@@ -168,50 +162,83 @@ $reservations = $bdd->query("SELECT r.*, u.nom AS nom_utilisateur, d.nom AS nom_
             </div>
         </div>
     </div>
-    <!-- Modal d'ajout de réservation -->
-    <div class="modal fade" id="addReservationModal" tabindex="-1" aria-hidden="true">
-        <form class="modal-dialog modal-dialog-centered" method="POST">
+
+    <div class="modal fade" id="detailReservationModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" method="POST">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Ajouter une réservation</h5>
+                    <h5 class="modal-title">Détail de la réservation</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="id_utilisateur" class="form-label">Utilisateur</label>
-                        <input type="number" class="form-control" id="id_utilisateur" name="id_utilisateur" required>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Client : </label>
+                            <span class="fw-bold" id="dUtilisateur"></span>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Destination : </label>
+                            <span class="fw-bold" id="dDestination"></span>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Date de départ : </label>
+                            <span class="fw-bold" id="dDateDepart"></span>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="dDateRetour" class="form-label">Date de retour : </label>
+                            <span class="fw-bold" id="dDateRetour"></span>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Classe souhaitée : </label>
+                            <span class="fw-bold" id="dClasseSouhaite"></span>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Nombre de passagers : </label>
+                            <span class="fw-bold" id="dNombrePassager"></span>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Montant : </label>
+                            <span class="fw-bold" id="dMontant"></span>
+                        </div>
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label">Remarques : </label>
+                            <small>
+                                <p class="text-muted" id="dRemarques"></p>
+                            </small>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Statut : </label>
+                            <span class="fw-bold" id="dStatut"></span>
+                        </div>
+
+                        <div id="paiementInfo" class="d-none">
+                            <hr>
+                            <h6 class="text-primary text-center">Paiement</h6>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Mode de paiement : </label>
+                                <span class="fw-bold" id="dNomModepaiement"></span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Date de paiement : </label>
+                                <span class="fw-bold" id="dDatePaiement"></span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Téléphone : </label>
+                                <span class="fw-bold" id="dTelephone"></span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Email : </label>
+                                <span class="fw-bold" id="dEmail"></span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Numéro de carte : </label>
+                                <span class="fw-bold" id="dNumeroCarte"></span>
+                            </div>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="id_destination" class="form-label">Destination</label>
-                        <input type="number" class="form-control" id="id_destination" name="id_destination" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="date_depart" class="form-label">Date de départ</label>
-                        <input type="date" class="form-control" id="date_depart" name="date_depart" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="date_retour" class="form-label">Date de retour</label>
-                        <input type="date" class="form-control" id="date_retour" name="date_retour" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="classe_souhaite" class="form-label">Classe souhaitée</label>
-                        <input type="text" class="form-control" id="classe_souhaite" name="classe_souhaite" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="nombre_passager" class="form-label">Nombre de passagers</label>
-                        <input type="number" class="form-control" id="nombre_passager" name="nombre_passager" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="remarques" class="form-label">Remarques</label>
-                        <textarea class="form-control" id="remarques" name="remarques"></textarea>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
-                    <button class="btn btn-primary" type="submit" name="add_reservation">Ajouter</button>
                 </div>
             </div>
-        </form>
+        </div>
     </div>
 
     <!-- Modal de modification de réservation -->
@@ -223,33 +250,27 @@ $reservations = $bdd->query("SELECT r.*, u.nom AS nom_utilisateur, d.nom AS nom_
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="uIdUtilisateur" class="form-label">Utilisateur</label>
-                        <input type="number" class="form-control" id="uIdUtilisateur" name="id_utilisateur" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="uIdDestination" class="form-label">Destination</label>
-                        <input type="number" class="form-control" id="uIdDestination" name="id_destination" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="uDateDepart" class="form-label">Date de départ</label>
-                        <input type="date" class="form-control" id="uDateDepart" name="date_depart" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="uDateRetour" class="form-label">Date de retour</label>
-                        <input type="date" class="form-control" id="uDateRetour" name="date_retour" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="uClasseSouhaite" class="form-label">Classe souhaitée</label>
-                        <input type="text" class="form-control" id="uClasseSouhaite" name="classe_souhaite" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="uNombrePassager" class="form-label">Nombre de passagers</label>
-                        <input type="number" class="form-control" id="uNombrePassager" name="nombre_passager" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="uRemarques" class="form-label">Remarques</label>
-                        <textarea class="form-control" id="uRemarques" name="remarques"></textarea>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="uDateDepart" class="form-label">Date de départ</label>
+                            <input type="date" class="form-control" id="uDateDepart" name="date_depart" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="uDateRetour" class="form-label">Date de retour</label>
+                            <input type="date" class="form-control" id="uDateRetour" name="date_retour" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="uClasseSouhaite" class="form-label">Classe souhaitée</label>
+                            <input type="text" class="form-control" id="uClasseSouhaite" name="classe_souhaite" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="uNombrePassager" class="form-label">Nombre de passagers</label>
+                            <input type="number" class="form-control" id="uNombrePassager" name="nombre_passager" required>
+                        </div>
+                        <div class="col-md-12 mb-3">
+                            <label for="uRemarques" class="form-label">Remarques</label>
+                            <textarea class="form-control" id="uRemarques" name="remarques"></textarea>
+                        </div>
                     </div>
                 </div>
                 <input type="hidden" id="id_reservation" name="id_reservation">
@@ -263,49 +284,107 @@ $reservations = $bdd->query("SELECT r.*, u.nom AS nom_utilisateur, d.nom AS nom_
 
     <?php include "include/common/script.php"; ?>
     <script>
-    function showEditModal(id, utilisateur, destination, depart, retour, classe, passager, remarques) {
-        console.log(id, utilisateur, destination, depart, retour, classe, passager,
-            remarques); // Ajoutez cette ligne pour déboguer
-        document.getElementById('id_reservation').value = id;
-        document.getElementById('uIdUtilisateur').value = utilisateur;
-        document.getElementById('uIdDestination').value = destination;
-        document.getElementById('uDateDepart').value = depart;
-        document.getElementById('uDateRetour').value = retour;
-        document.getElementById('uClasseSouhaite').value = classe;
-        document.getElementById('uNombrePassager').value = passager;
-        document.getElementById('uRemarques').value = remarques;
-        var modal = new bootstrap.Modal(document.getElementById('updateReservationModal'));
-        modal.show();
-    }
+        function showEditModal(id, utilisateur, destination, depart, retour, classe, passager, remarques) {
+            document.getElementById('id_reservation').value = id;
+            document.getElementById('uDateDepart').value = depart;
+            document.getElementById('uDateRetour').value = retour;
+            document.getElementById('uClasseSouhaite').value = classe;
+            document.getElementById('uNombrePassager').value = passager;
+            document.getElementById('uRemarques').value = remarques;
+            var modal = new bootstrap.Modal(document.getElementById('updateReservationModal'));
+            modal.show();
+        }
 
-    function detail(reservation) {
-        console.log(reservation);
-    }
-
-    function updateStatus(id, status) {
-        confirmSweetAlert("Voulez-vous vraiment effectuer cette action ?").then((out) => {
-            if (out.isConfirmed) {
-                $.ajax({
-                    type: "post",
-                    url: "model/app/reservation.php",
-                    data: {
-                        id_reservation: id,
-                        status: status,
-                        updateStatus: "updateStatus"
-                    },
-                    dataType: "text",
-                    success: function(response) {
-                        let res = JSON.parse(response);
-                        if (res.code === 200) {
-                            successSweetAlert(res.message);
-                        } else if (res.code === 400 || res.code === 500) {
-                            errorSweetAlert(res.message);
+        function detail(id_reservation) {
+            $('#paiementInfo').addClass("d-none")
+            $.ajax({
+                type: "post",
+                url: "model/app/reservation.php",
+                data: {
+                    detail: "detail",
+                    id_reservation: id_reservation
+                },
+                dataType: "json",
+                success: function(response) {
+                    if (response.code === 200) {
+                        let res = response.data;
+                        $('#dUtilisateur').text(res.reservation.nom_utilisateur);
+                        $('#dDestination').text(res.reservation.nom_destination);
+                        $('#dDateDepart').text(res.reservation.date_depart);
+                        $('#dDateRetour').text(res.reservation.date_retour);
+                        $('#dClasseSouhaite').text(res.reservation.classe_souhaite);
+                        $('#dNombrePassager').text(res.reservation.nombre_passager);
+                        $('#dMontant').text(res.reservation.montant + " FCFA");
+                        $('#dRemarques').text(res.reservation.remarques);
+                        $('#dStatut').text(res.reservation.statut);
+                        if(res.paiement && res.paiement != null){
+                            $('#paiementInfo').removeClass("d-none")
+                            $('#dNomModepaiement').text(res.paiement.nom_modepaiement);
+                            $('#dDatePaiement').text(res.paiement.date_paiement);
+                            $('#dTelephone').text(res.paiement.telephone);
+                            $('#dEmail').text(res.paiement.email);
+                            $('#dNumeroCarte').text(res.paiement.numero_carte);
                         }
+                        var modalDetail = new bootstrap.Modal(document.getElementById('detailReservationModal'));
+                        modalDetail.show();
+                    } else if (response.code === 400 || response.code === 500) {
+                        errorSweetAlert(response.message);
+                    }
+
+                }
+            });
+        }
+
+        function updateStatus(id, status) {
+            if (status === "validée") {
+                confirmInputSweetAlert("Afin de valider cette reservation veuillez saisire le montant de la reservation.").then((out) => {
+                    if (out.isConfirmed) {
+                        $.ajax({
+                            type: "post",
+                            url: "model/app/reservation.php",
+                            data: {
+                                id_reservation: id,
+                                status: status,
+                                montant: out.value,
+                                updateStatus: "updateStatus"
+                            },
+                            dataType: "text",
+                            success: function(response) {
+                                let res = JSON.parse(response);
+                                if (res.code === 200) {
+                                    successSweetAlert(res.message);
+                                } else if (res.code === 400 || res.code === 500) {
+                                    errorSweetAlert(res.message);
+                                }
+                            }
+                        });
+                    }
+                })
+            } else {
+                confirmSweetAlert("Voulez-vous vraiment effectuer cette action ?").then((out) => {
+                    if (out.isConfirmed) {
+                        $.ajax({
+                            type: "post",
+                            url: "model/app/reservation.php",
+                            data: {
+                                id_reservation: id,
+                                status: status,
+                                updateStatus: "updateStatus"
+                            },
+                            dataType: "text",
+                            success: function(response) {
+                                let res = JSON.parse(response);
+                                if (res.code === 200) {
+                                    successSweetAlert(res.message);
+                                } else if (res.code === 400 || res.code === 500) {
+                                    errorSweetAlert(res.message);
+                                }
+                            }
+                        });
                     }
                 });
             }
-        });
-    }
+        }
     </script>
 </body>
 
