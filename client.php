@@ -10,58 +10,6 @@ if (!is_connected()) {
 checkRole();
 $page = "Client";  // Page actuelle
 
-// Mise à jour des informations d'un client
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_client'])) {
-    $id_utilisateur = $_POST['id_utilisateur'];
-    $nom = htmlspecialchars($_POST['nom']);
-    $adresse = htmlspecialchars($_POST['adresse']);
-    $telephone = htmlspecialchars($_POST['telephone']);
-
-    $stmt = $bdd->prepare("UPDATE utilisateur SET nom = :nom, adresse = :adresse, telephone = :telephone WHERE id_utilisateur = :id_utilisateur AND role = 'CLIENT'");
-    $stmt->execute([
-        ':nom' => $nom,
-        ':adresse' => $adresse,
-        ':telephone' => $telephone,
-        ':id_utilisateur' => $id_utilisateur
-    ]);
-    echo "<script>alert('Mise à jour réussie !');</script>";
-}
-
-// Changement de statut avec validation des statuts possibles
-if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["update_status"])) {
-    $statut = $_POST['statut']; // Récupère le statut du formulaire
-    $id_utilisateur = $_POST['id_utilisateur'];
-    $statuts_valides = ['Actif', 'Bloqué']; // Liste des statuts valides
-    if (!in_array($statut, $statuts_valides)) {
-        echo "<script>alert('Statut invalide');</script>";
-        exit;
-    }
-
-    // Préparation et exécution de la mise à jour du statut
-    $stmt = $bdd->prepare("UPDATE utilisateur SET statut = :statut WHERE id_utilisateur = :id_utilisateur");
-    $stmt->execute([
-        ':statut' => $statut,
-        ':id_utilisateur' => $id_utilisateur
-    ]);
-
-    echo "success";
-    exit;
-}
-
-
-// Suppression d'un utilisateur
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_user'])) {
-    $id_utilisateur = $_POST['delete_user'];
-
-    // Mettre à jour le statut à "Supprimé" au lieu de supprimer l'utilisateur
-    $stmt = $bdd->prepare("UPDATE utilisateur SET statut = 'Supprimé' WHERE id_utilisateur = :id_utilisateur");
-    $stmt->execute([':id_utilisateur' => $id_utilisateur]);
-
-    echo "success";
-    exit;
-}
-
-
 $sqlClients = $bdd->query("SELECT id_utilisateur, nom, email, telephone, adresse, statut FROM utilisateur WHERE role = 'CLIENT'");
 $clients = $sqlClients->fetchAll();
 ?>
@@ -135,12 +83,7 @@ $clients = $sqlClients->fetchAll();
                                                 </td>
                                                 <td>
                                                     <!-- Bouton pour changer le statut -->
-                                                    <a href="#" class="text-primary toggle-status me-2"
-                                                        data-id="<?= $client['id_utilisateur'] ?>"
-                                                        data-status="<?= $client['statut'] ?>">
-                                                        <i class="fas fa-sync-alt"></i>
-                                                    </a>
-                                                    <!-- Bouton pour modifier -->
+
                                                     <a href="#"
                                                         onclick="showEditModal('<?= $client['id_utilisateur'] ?>', '<?= $client['nom'] ?>', '<?= $client['email'] ?>', '<?= $client['telephone'] ?>', '<?= $client['adresse'] ?>')"
                                                         class="text-warning me-2">
@@ -148,11 +91,25 @@ $clients = $sqlClients->fetchAll();
                                                             data-bs-target="#updateClientModal"></i>
                                                     </a>
 
-                                                    <!-- Bouton pour supprimer -->
-                                                    <a href="#" onclick="markAsDeleted('<?= $client['id_utilisateur'] ?>')"
-                                                        class="text-danger">
-                                                        <i class="fas fa-trash-alt"></i>
-                                                    </a>
+                                                    <?php
+                                                    if ($client['statut'] == "Actif") { ?>
+                                                        <a href="#!" class="text-warning me-2" data-bs-toggle="tooltip" data-bs-placement="top"
+                                                            title="Bloquer" onclick="changeStatus(<?= $client['id_utilisateur'] ?>,'Bloqué')">
+                                                            <i class="fas fa-lock"></i>
+                                                        </a>
+                                                    <?php } elseif ($client['statut'] == "Bloqué" || $client['statut'] == "Supprimé") { ?>
+                                                        <a href="#!" class="text-success me-2" data-bs-toggle="tooltip" data-bs-placement="top"
+                                                            title="Activer" onclick="changeStatus(<?= $client['id_utilisateur'] ?>,'Actif')">
+                                                            <i class="fas fa-lock-open"></i>
+                                                        </a>
+                                                    <?php }
+                                                    if ($client['statut'] != "Supprimé") { ?>
+                                                        <a href="#!" data-bs-toggle="tooltip" data-bs-placement="top"
+                                                            title="Supprimer" onclick="changeStatus(<?= $client['id_utilisateur'] ?>,'Supprimé')"
+                                                            class="text-danger">
+                                                            <i class="fas fa-trash-alt"></i>
+                                                        </a>
+                                                    <?php } ?>
                                                 </td>
                                             </tr>
                                         <?php endforeach; ?>
@@ -195,7 +152,7 @@ $clients = $sqlClients->fetchAll();
                 <input type="number" id="id_utilisateur" name="id_utilisateur" hidden>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
-                    <button class="btn btn-primary" type="submit" name="update_client">Mettre à jour</button>
+                    <button class="btn btn-primary" type="submit" name="update_client" id="update_client">Mettre à jour</button>
                 </div>
             </div>
         </form>
@@ -203,25 +160,6 @@ $clients = $sqlClients->fetchAll();
 
     <?php include "include/common/script.php"; ?>
     <script>
-        // Déjà présent : Gestion des utilisateurs supprimés
-        function markAsDeleted(idUtilisateur) {
-            if (confirm("Êtes-vous sûr de vouloir marquer cet utilisateur comme supprimé ?")) {
-                let formData = new FormData();
-                formData.append("delete_user", idUtilisateur);
-
-                fetch("utilisateur.php", {
-                    method: "POST",
-                    body: formData,
-                }).then(response => response.text()).then(data => {
-                    if (data === "success") {
-                        location.reload(); // Recharger la page pour voir les changements
-                    } else {
-                        alert("Erreur lors de la suppression.");
-                    }
-                });
-            }
-        }
-
         // Déjà présent : Préremplir le modal de modification
         function showEditModal(id, nom, email, telephone, adresse) {
             document.getElementById("id_utilisateur").value = id;
@@ -231,43 +169,33 @@ $clients = $sqlClients->fetchAll();
             document.getElementById("uAdresse").value = adresse;
         }
 
-        // Nouveau : Gestion du changement de statut
-        document.querySelectorAll('.toggle-status').forEach(function(element) {
-            element.addEventListener('click', function(e) {
-                e.preventDefault();
+        // Modifier un utilisateur
+        $('#update_client').click((e) => {
+            e.preventDefault();
+            let data = {
+                nom: $('#uNom').val(),
+                update_user: "update_user",
+                adresse: $('#uAdresse').val(),
+                telephone: $('#uTelephone').val(),
+                id_utilisateur: $('#id_utilisateur').val(),
+            }
+            ajaxRequest("post", "model/app/utilisateur.php", data);
+        })
 
-                var idUtilisateur = element.getAttribute('data-id');
-                var statutActuel = element.getAttribute('data-status');
-                var nouveauStatut = (statutActuel === 'Actif') ? 'Bloqué' :
-                    'Actif'; // Alterne entre 'Actif' et 'Bloqué'
-
-                let formData = new FormData();
-                formData.append("update_status", true);
-                formData.append("id_utilisateur", idUtilisateur);
-                formData.append("statut", nouveauStatut);
-
-                fetch('utilisateur.php', {
-                        method: 'POST',
-                        body: formData
-                    })
-                    .then(response => response.text())
-                    .then(data => {
-                        if (data === 'success') {
-                            // Met à jour l'affichage du statut sur la page sans recharger
-                            element.closest('tr').querySelector('td:nth-child(5) span').textContent =
-                                nouveauStatut;
-                            element.closest('tr').querySelector('td:nth-child(5) span').className = (
-                                nouveauStatut === 'Actif') ? 'text-success' : 'text-danger';
-
-                            // Met à jour l'attribut data-status de l'élément cliqué
-                            element.setAttribute('data-status', nouveauStatut);
-                        } else {
-                            alert("Erreur lors de la mise à jour du statut.");
-                        }
-                    })
-                    .catch(error => console.error('Erreur : ', error));
-            });
-        });
+        // Activer, bloquer et supprimer un utilisateur
+        function changeStatus(id_utilisateur, statut = "Actif" || "Bloqué") {
+            let data = {
+                id_utilisateur: id_utilisateur,
+                statut: statut,
+                updateStatus: "updateStatus",
+            };
+            let verbe = statut == "Actif" ? "activer" : statut == "Bloqué" ? "bloquer" : "supprimer";
+            confirmSweetAlert("Voulez-vous vraiment " + verbe + " ce utilisateur ?").then((out) => {
+                if (out.isConfirmed) {
+                    ajaxRequest("post", "model/app/utilisateur.php", data);
+                }
+            })
+        }
     </script>
 </body>
 

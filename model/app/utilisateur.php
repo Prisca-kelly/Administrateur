@@ -21,7 +21,7 @@ if (is_connected()) {
                         if ($sql) {
                             echo json_encode(["code" => 200, "message" => "Mise à jour réussie !"]);
                         } else {
-                            echo json_encode(["code" => 400, "message" => "Erreur lors de l'enregistrement !"]);
+                            echo json_encode(["code" => 500, "message" => "Erreur lors de l'enregistrement !"]);
                         }
                     } else {
                         echo json_encode(["code" => 400, "message" => "Cette adresse Email este déjà utilisée !"]);
@@ -49,7 +49,7 @@ if (is_connected()) {
             if ($sql) {
                 echo json_encode(["code" => 200, "message" => "Mise à jour réussie !"]);
             } else {
-                echo json_encode(["code" => 400, "message" => "Erreur lors de la mise à jour de l'utilisateur !"]);
+                echo json_encode(["code" => 500, "message" => "Erreur lors de la mise à jour de l'utilisateur !"]);
             }
         } else {
             echo json_encode(["code" => 400, "message" => "Replissez tous les champs !"]);
@@ -67,7 +67,7 @@ if (is_connected()) {
             if ($sql) {
                 echo json_encode(["code" => 200, 'message' => "Utilisateur " . strtolower($statut) . " avec succès !"]);
             } else {
-                echo json_encode(["code" => 400, "message" => "Erreur lors de la modification du statut !"]);
+                echo json_encode(["code" => 500, "message" => "Erreur lors de la modification du statut !"]);
             }
         } else {
             echo json_encode(["code" => 400, "message" => "Erreur de la requête !"]);

@@ -13,7 +13,7 @@ if (is_connected()) {
             if ($stmt) {
                 echo json_encode(["code" => 200, 'message' => "Hotel " . $status . " avec succès !"]);
             } else {
-                echo json_encode(["code" => 400, "message" => "Erreur lors de la modification du statut !"]);
+                echo json_encode(["code" => 500, "message" => "Erreur lors de la modification du statut !"]);
             }
         } else {
             echo json_encode(["code" => 400, "message" => "Erreur de la requête !"]);
@@ -31,14 +31,12 @@ if (is_connected()) {
         if (empty($nom) || empty($description) || empty($prix) || empty($ville) || empty($dure) || empty($id_hotel)) {
             echo json_encode(["code" => 400, "message" => "Veuillez remplir tous les champs !"]);
         } else {
-
-
             $query = $bdd->prepare("UPDATE hotel SET nom = ?, description = ?, prix = ?, ville = ?, dure = ? WHERE id_hotel = ?");
             $query->execute(array($nom, $description, $prix, $ville, $dure, $id_hotel));
             if ($query) {
                 echo json_encode(["code" => 200, "message" => "Hotel modifié avec succès !"]);
             } else {
-                echo json_encode(["code" => 400, "message" => "Erreur lors de la modification de l'hotel !"]);
+                echo json_encode(["code" => 500, "message" => "Erreur lors de la modification de l'hotel !"]);
             }
         }
     }
