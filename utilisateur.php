@@ -242,11 +242,20 @@ $users = $sqlUsers->fetchAll();
         // Activer, bloquer et supprimer un utilisateur
         function changeStatus(id_utilisateur, statut = "Actif" || "Bloqué") {
             let data = {
-                id_utilisateur: id_utilisateur,
+                id_utilisateur: null,
                 statut: statut,
                 updateStatus: "updateStatus",
             };
-            let verbe = statut == "Actif" ? "activer" : statut == "Bloqué" ? "bloquer" : "supprimer";
+            let verbe = null;
+
+            if (statut == "Actif") {
+                verbe = "activer";
+            } else if (statut == "Bloqué") {
+                verbe = "bloquer";
+            } else {
+                verbe = "supprimer";
+            }
+
             confirmSweetAlert("Voulez-vous vraiment " + verbe + " ce utilisateur ?").then((out) => {
                 if (out.isConfirmed) {
                     ajaxRequest("post", "model/app/utilisateur.php", data);

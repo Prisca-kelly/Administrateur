@@ -1,3 +1,4 @@
+// Alerte pour demander confirmation sur l'action à effectuer
 function confirmSweetAlert(msg = "") {
   return Swal.fire({
     icon: "question",
@@ -10,6 +11,7 @@ function confirmSweetAlert(msg = "") {
   });
 }
 
+// Alerte pour demander l'insertion d'une valeur afin de valider
 function confirmInputSweetAlert(msg = "") {
   return Swal.fire({
     title: "Confirmation",
@@ -25,6 +27,7 @@ function confirmInputSweetAlert(msg = "") {
   });
 }
 
+// Alerte pour marquer une opération réussie
 function successSweetAlert(msg = "", timer = 2000) {
   Swal.fire({
     icon: "success",
@@ -37,6 +40,7 @@ function successSweetAlert(msg = "", timer = 2000) {
   });
 }
 
+// Alerte pour marquer une erreur de process
 function errorSweetAlert(msg = "", timer = 2000) {
   Swal.fire({
     icon: "error",
@@ -52,7 +56,6 @@ function temps() {
   const temps = document.getElementById("temps");
   if (temps) temps.innerText = heure < 12 ? "Bonjour" : "Bonsoir";
 }
-
 temps();
 
 function ajaxRequest(method, url, data) {

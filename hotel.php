@@ -58,11 +58,12 @@ $hotels = $bdd->query("SELECT id_hotel, image, nom, description, prix, ville, du
                 <?php include "include/common/navbar.php"; ?>
                 <div class="content-wrapper">
                     <div class="container-fluid flex-grow-1 container-p-y">
-                        <h4 class="fw-bold py-3 mb-0">Liste des Hôtels</h4>
-                        <button class="btn btn-primary mb-3" data-bs-toggle="modal"
-                            data-bs-target="#addHotelModal">Ajouter un hôtel
-                        </button>
-
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h4 class="fw-bold py-3 mb-0">Hôtels</h4>
+                            <button class="btn btn-primary mb-3" data-bs-toggle="modal"
+                                data-bs-target="#addHotelModal">Ajouter un hôtel
+                            </button>
+                        </div>
                         <div class="card">
                             <div class="table-responsive text-nowrap">
                                 <table class="table">

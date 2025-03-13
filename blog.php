@@ -122,7 +122,7 @@ if (isset($_POST['changer_statut'])) {
                 <div class="content-wrapper">
                     <div class="container-fluid flex-grow-1 container-p-y">
                         <div class="d-flex justify-content-between align-items-center mb-4">
-                            <h4 class="fw-bold py-3 mb-0">Articles de blog</h4>
+                            <h4 class="fw-bold py-3 mb-0">Blog</h4>
                             <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addBlogModal">
                                 <i class="fas fa-plus"></i> Ajouter
                             </button>
