@@ -92,7 +92,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 </div>
                             </div>
                             <div class="mb-3">
-                                <button class="btn btn-primary d-grid w-100" type="submit">Connexion</button>
+                                <button class="btn btn-primary d-grid w-100" id="login" type="submit">Connexion</button>
                             </div>
                         </form>
 
@@ -110,6 +110,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
 
     <?php include "include/common/script.php"; ?>
+    <script>
+        $('#login').click((e) => {
+            e.preventDefault();
+            let data = {
+                email: $('#email').val(),
+                password: $('#password').val(),
+                login: "login",
+            }
+            ajaxRequest("post", "model/app/utilisateur.php", data);
+        })
+    </script>
 </body>
 
 </html>

@@ -1,6 +1,12 @@
 <?php
 require('model/config/database.php');
 require('model/config/util.php');
+init_session(); // Initialiser la session
+if (!is_connected()) {
+    echo "<script>alert('Veuillez vous connecter avant de continuer !');</script>";
+    echo '<script> window.location="index.php"</script>';
+}
+checkRole();
 $page = "Blog";
 
 // Ajouter un article
@@ -146,15 +152,15 @@ if (isset($_POST['changer_statut'])) {
                                                 <td><?= htmlspecialchars(substr($article['contenu'], 0, 100)) ?>...</td>
                                                 <td><img src="uploads/<?= htmlspecialchars($article['image']) ?>" width="80"
                                                         height="60"></td>
-                                                        <td>
-                                                            <?php if ($article['statut'] == 'publié'): ?>
-                                                              <span>Publié</span>
-                                                            <?php elseif ($article['statut'] == 'non-publié'): ?>
-                                                              <span>Non publié</span>
-                                                            <?php elseif ($article['statut'] == 'supprimé'): ?>
-                                                              <span class="text-danger">Supprimé</span>
-                                                            <?php endif; ?>
-                                                        </td>
+                                                <td>
+                                                    <?php if ($article['statut'] == 'publié'): ?>
+                                                        <span>Publié</span>
+                                                    <?php elseif ($article['statut'] == 'non-publié'): ?>
+                                                        <span>Non publié</span>
+                                                    <?php elseif ($article['statut'] == 'supprimé'): ?>
+                                                        <span class="text-danger">Supprimé</span>
+                                                    <?php endif; ?>
+                                                </td>
                                                 <td>
                                                     <!-- Bouton Modifier -->
                                                     <button class="btn btn-no-style" data-bs-toggle="modal"
@@ -162,12 +168,12 @@ if (isset($_POST['changer_statut'])) {
                                                         <i class="fa-solid fa-pen-to-square"></i>
                                                     </button>
 
-                                                   <!-- Bouton Marquer comme Supprimé -->
-                                                   <form action="blog.php" method="POST" style="display:inline;">
+                                                    <!-- Bouton Marquer comme Supprimé -->
+                                                    <form action="blog.php" method="POST" style="display:inline;">
                                                         <input type="hidden" name="delete_article" value="<?= $article['id_article'] ?>">
                                                         <button type="submit" class="btn btn-link text-danger"
-                                                           onclick="return confirm('Êtes-vous sûr de vouloir marquer cet article comme supprimé ?')">
-                                                           <i class="fas fa-trash-alt"></i>
+                                                            onclick="return confirm('Êtes-vous sûr de vouloir marquer cet article comme supprimé ?')">
+                                                            <i class="fas fa-trash-alt"></i>
                                                         </button>
                                                     </form>
 

@@ -2,6 +2,12 @@
 // inclusion des fichiers
 require('model/config/database.php'); // Gère la connexion à la base de données
 require('model/config/util.php'); // contient des fonctions utilitaires
+init_session(); // Initialiser la session
+if (!is_connected()) {
+    echo "<script>alert('Veuillez vous connecter avant de continuer !');</script>";
+    echo '<script> window.location="index.php"</script>';
+}
+checkRole();
 $page = "Client";  // Page actuelle
 
 // Mise à jour des informations d'un client

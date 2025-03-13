@@ -2,6 +2,12 @@
 // inclusion des fichiers
 require('model/config/database.php'); // Gère la connexion à la base de données
 require('model/config/util.php'); // contient des fonctions utilitaires
+init_session(); // Initialiser la session
+if (!is_connected()) {
+    echo "<script>alert('Veuillez vous connecter avant de continuer !');</script>";
+    echo '<script> window.location="index.php"</script>';
+}
+checkRole();
 $page = "Mode de Paiement";  // Page actuelle
 
 // Mise à jour des informations d'un mode de paiement
@@ -37,14 +43,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_modepaiement']
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_status'])) {
     $id_modepaiement = $_POST['id_modepaiement'];
     $new_status = $_POST['new_status'];
-    
+
     // Mettre à jour le statut en base de données
     $stmt = $bdd->prepare("UPDATE modepaiement SET statut = :new_status WHERE id_modepaiement = :id_modepaiement");
     $stmt->execute([
         ':new_status' => $new_status,
         ':id_modepaiement' => $id_modepaiement
     ]);
-    
+
     echo "success"; // Réponse pour indiquer le succès
     exit;
 }
@@ -138,23 +144,23 @@ $modePaiements = $sqlModePaiement->fetchAll();
                                                 </td>
                                                 <td>
                                                     <!-- Bouton pour changer le statut -->
-                                                    <a href="#" 
-                                                       class="text-primary toggle-status me-2" 
-                                                       data-id="<?= $mode['id_modepaiement'] ?>" 
-                                                       data-status="<?= $mode['statut'] ?>">
+                                                    <a href="#"
+                                                        class="text-primary toggle-status me-2"
+                                                        data-id="<?= $mode['id_modepaiement'] ?>"
+                                                        data-status="<?= $mode['statut'] ?>">
                                                         <i class="fas fa-sync-alt"></i>
                                                     </a>
-                                                    
+
                                                     <!-- Bouton pour modifier -->
                                                     <a href="#"
-                                                       onclick="showEditModal('<?= $mode['id_modepaiement'] ?>', '<?= $mode['nom_modepaiement'] ?>', '<?= $mode['description'] ?>', '<?= $mode['statut'] ?>')"
-                                                       class="text-warning me-2">
+                                                        onclick="showEditModal('<?= $mode['id_modepaiement'] ?>', '<?= $mode['nom_modepaiement'] ?>', '<?= $mode['description'] ?>', '<?= $mode['statut'] ?>')"
+                                                        class="text-warning me-2">
                                                         <i class="fas fa-edit text-primary" data-bs-toggle="modal" data-bs-target="#updateModePaiementModal"></i>
                                                     </a>
-                                                    
+
                                                     <!-- Bouton pour supprimer -->
                                                     <a href="#" onclick="markAsDeleted('<?= $mode['id_modepaiement'] ?>')" class="text-danger">
-                                                    <i class="fas fa-trash-alt"></i>
+                                                        <i class="fas fa-trash-alt"></i>
                                                     </a>
                                                 </td>
                                             </tr>
@@ -219,77 +225,75 @@ $modePaiements = $sqlModePaiement->fetchAll();
                         <label for="uDescription" class="form-label">Description</label>
                         <input type="text" class="form-control" id="uDescription" name="description" required>
                     </div>
-                <input type="number" id="id_modepaiement" name="id_modepaiement" hidden>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
-                    <button class="btn btn-primary" type="submit" name="update_modepaiement">Mise à jour</button>
+                    <input type="number" id="id_modepaiement" name="id_modepaiement" hidden>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
+                        <button class="btn btn-primary" type="submit" name="update_modepaiement">Mise à jour</button>
+                    </div>
                 </div>
-            </div>
         </form>
     </div>
 
     <?php include "include/common/script.php"; ?>
 
     <script>
+        document.querySelectorAll('.toggle-status').forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
 
-document.querySelectorAll('.toggle-status').forEach(button => {
-    button.addEventListener('click', function (e) {
-        e.preventDefault();
-        
-        let idModePaiement = this.getAttribute('data-id');
-        let currentStatus = this.getAttribute('data-status');
-        
-        // Changer le statut
-        let newStatus = (currentStatus === 'actif') ? 'inactif' : 'actif';
-        
-        let formData = new FormData();
-        formData.append('update_status', true);
-        formData.append('id_modepaiement', idModePaiement);
-        formData.append('new_status', newStatus);
-        
-        fetch('modepaiement.php', {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => response.text())
-        .then(data => {
-            if (data === 'success') {
-                // Actualiser la page ou changer dynamiquement le statut
-                location.reload(); // Recharger pour voir le changement
-            } else {
-                alert('Erreur lors de la mise à jour du statut.');
-            }
-        });
-    });
-});
+                let idModePaiement = this.getAttribute('data-id');
+                let currentStatus = this.getAttribute('data-status');
 
-    // Gestion des modes de paiement supprimés
-    function markAsDeleted(idModePaiement) {
-        if (confirm("Êtes-vous sûr de vouloir marquer ce mode de paiement comme supprimé ?")) {
-            let formData = new FormData();
-            formData.append("delete_modepaiement", idModePaiement);
+                // Changer le statut
+                let newStatus = (currentStatus === 'actif') ? 'inactif' : 'actif';
 
-            fetch("modepaiement.php", {
-                method: "POST",
-                body: formData,
-            }).then(response => response.text()).then(data => {
-                if (data === "success") {
-                    location.reload(); // Recharger la page pour voir les changements
-                } else {
-                    alert("Erreur lors de la suppression.");
-                }
+                let formData = new FormData();
+                formData.append('update_status', true);
+                formData.append('id_modepaiement', idModePaiement);
+                formData.append('new_status', newStatus);
+
+                fetch('modepaiement.php', {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => response.text())
+                    .then(data => {
+                        if (data === 'success') {
+                            // Actualiser la page ou changer dynamiquement le statut
+                            location.reload(); // Recharger pour voir le changement
+                        } else {
+                            alert('Erreur lors de la mise à jour du statut.');
+                        }
+                    });
             });
+        });
+
+        // Gestion des modes de paiement supprimés
+        function markAsDeleted(idModePaiement) {
+            if (confirm("Êtes-vous sûr de vouloir marquer ce mode de paiement comme supprimé ?")) {
+                let formData = new FormData();
+                formData.append("delete_modepaiement", idModePaiement);
+
+                fetch("modepaiement.php", {
+                    method: "POST",
+                    body: formData,
+                }).then(response => response.text()).then(data => {
+                    if (data === "success") {
+                        location.reload(); // Recharger la page pour voir les changements
+                    } else {
+                        alert("Erreur lors de la suppression.");
+                    }
+                });
+            }
         }
-    }
 
-    // Préremplir le modal de modification
-    function showEditModal(id, nom, description, statut) {
-        document.getElementById("id_modepaiement").value = id;
-        document.getElementById("uNom").value = nom;
-        document.getElementById("uDescription").value = description;
-        document.getElementById("uStatut").value = statut;
-    }
-
+        // Préremplir le modal de modification
+        function showEditModal(id, nom, description, statut) {
+            document.getElementById("id_modepaiement").value = id;
+            document.getElementById("uNom").value = nom;
+            document.getElementById("uDescription").value = description;
+            document.getElementById("uStatut").value = statut;
+        }
     </script>
 </body>
 

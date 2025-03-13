@@ -1,6 +1,12 @@
 <?php
 require('model/config/database.php');
 require('model/config/util.php');
+init_session(); // Initialiser la session
+if (!is_connected()) {
+    echo "<script>alert('Veuillez vous connecter avant de continuer !');</script>";
+    echo '<script> window.location="index.php"</script>';
+}
+checkRole();
 
 header("Cache-Control: no-cache, must-revalidate"); // Évite la mise en cache
 
@@ -11,7 +17,7 @@ if (isset($_POST["ajouter"])) {
     if (!empty($_POST["nom"]) && !empty($_POST["description"]) && !empty($_FILES["image"]["name"])) {
         $nom = htmlspecialchars($_POST["nom"]);
         $description = htmlspecialchars($_POST["description"]);
-        
+
         // Gestion de l'upload d'image
         $image = basename($_FILES["image"]["name"]);
         $target_dir = "uploads/";
@@ -169,7 +175,7 @@ $destinations = $bdd->query("SELECT id_destination, nom, description, image, sta
                                                     }
                                                     ?>
                                                     <span class="<?= $statusClass ?>"><?= $statusText ?></span>
-                                                    </td>
+                                                </td>
                                                 <td>
                                                     <form action="destination.php" method="post" style="display:inline;">
                                                         <input type="hidden" name="toggle_id" value="<?= $destination['id_destination'] ?>">
@@ -185,10 +191,10 @@ $destinations = $bdd->query("SELECT id_destination, nom, description, image, sta
                                                         <i class="fas fa-edit"></i>
                                                     </button>
                                                     <form action="destination.php" method="post" style="display:inline;">
-                                                       <input type="hidden" name="delete_destination" value="<?= $destination['id_destination'] ?>">
-                                                       <button type="submit" class="btn btn-link text-danger">
-                                                           <i class="fas fa-trash-alt"></i>
-                                                       </button>
+                                                        <input type="hidden" name="delete_destination" value="<?= $destination['id_destination'] ?>">
+                                                        <button type="submit" class="btn btn-link text-danger">
+                                                            <i class="fas fa-trash-alt"></i>
+                                                        </button>
                                                     </form>
                                                 </td>
                                             </tr>
@@ -269,68 +275,68 @@ $destinations = $bdd->query("SELECT id_destination, nom, description, image, sta
     </div>
 
     <script>
-    // Gestion des destinations supprimées
-    function markAsDeleted(idDestination) {
-        if (confirm("Êtes-vous sûr de vouloir marquer cette destination comme supprimée ?")) {
-            let formData = new FormData();
-            formData.append("delete_destination", idDestination);
+        // Gestion des destinations supprimées
+        function markAsDeleted(idDestination) {
+            if (confirm("Êtes-vous sûr de vouloir marquer cette destination comme supprimée ?")) {
+                let formData = new FormData();
+                formData.append("delete_destination", idDestination);
 
-            fetch("destination.php", {
-                method: "POST",
-                body: formData,
-            }).then(response => response.text()).then(data => {
-                if (data === "success") {
-                    location.reload(); // Recharger la page pour voir les changements
-                } else {
-                    alert("Erreur lors de la suppression.");
-                }
-            });
+                fetch("destination.php", {
+                    method: "POST",
+                    body: formData,
+                }).then(response => response.text()).then(data => {
+                    if (data === "success") {
+                        location.reload(); // Recharger la page pour voir les changements
+                    } else {
+                        alert("Erreur lors de la suppression.");
+                    }
+                });
+            }
         }
-    }
 
-    // Déjà présent : Préremplir le modal de modification
-    function showEditModal(id, nom, description, statut) {
-        document.getElementById("id_destination").value = id;
-        document.getElementById("dNom").value = nom;
-        document.getElementById("dDescription").value = description;
-        document.getElementById("dStatut").value = statut;
-    }
+        // Déjà présent : Préremplir le modal de modification
+        function showEditModal(id, nom, description, statut) {
+            document.getElementById("id_destination").value = id;
+            document.getElementById("dNom").value = nom;
+            document.getElementById("dDescription").value = description;
+            document.getElementById("dStatut").value = statut;
+        }
 
-    // Nouveau : Gestion du changement de statut des destinations
-    document.querySelectorAll('.toggle-status-destination').forEach(function (element) {
-        element.addEventListener('click', function (e) {
-            e.preventDefault();
-            
-            var idDestination = element.getAttribute('data-id');
-            var statutActuel = element.getAttribute('data-status');
-            var nouveauStatut = (statutActuel === 'Activée') ? 'Désactivée' : 'Activée'; // Alterne entre 'Activée' et 'Désactivée'
-            
-            let formData = new FormData();
-            formData.append("update_status_destination", true);
-            formData.append("id_destination", idDestination);
-            formData.append("statut", nouveauStatut);
-            
-            fetch('destination.php', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.text())
-            .then(data => {
-                if (data === 'success') {
-                    // Met à jour l'affichage du statut sur la page sans recharger
-                    element.closest('tr').querySelector('td:nth-child(5) span').textContent = nouveauStatut;
-                    element.closest('tr').querySelector('td:nth-child(5) span').className = (nouveauStatut === 'Activée') ? 'text-success' : 'text-warning';
-                    
-                    // Met à jour l'attribut data-status de l'élément cliqué
-                    element.setAttribute('data-status', nouveauStatut);
-                } else {
-                    alert("Erreur lors de la mise à jour du statut.");
-                }
-            })
-            .catch(error => console.error('Erreur : ', error));
+        // Nouveau : Gestion du changement de statut des destinations
+        document.querySelectorAll('.toggle-status-destination').forEach(function(element) {
+            element.addEventListener('click', function(e) {
+                e.preventDefault();
+
+                var idDestination = element.getAttribute('data-id');
+                var statutActuel = element.getAttribute('data-status');
+                var nouveauStatut = (statutActuel === 'Activée') ? 'Désactivée' : 'Activée'; // Alterne entre 'Activée' et 'Désactivée'
+
+                let formData = new FormData();
+                formData.append("update_status_destination", true);
+                formData.append("id_destination", idDestination);
+                formData.append("statut", nouveauStatut);
+
+                fetch('destination.php', {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => response.text())
+                    .then(data => {
+                        if (data === 'success') {
+                            // Met à jour l'affichage du statut sur la page sans recharger
+                            element.closest('tr').querySelector('td:nth-child(5) span').textContent = nouveauStatut;
+                            element.closest('tr').querySelector('td:nth-child(5) span').className = (nouveauStatut === 'Activée') ? 'text-success' : 'text-warning';
+
+                            // Met à jour l'attribut data-status de l'élément cliqué
+                            element.setAttribute('data-status', nouveauStatut);
+                        } else {
+                            alert("Erreur lors de la mise à jour du statut.");
+                        }
+                    })
+                    .catch(error => console.error('Erreur : ', error));
+            });
         });
-    });
-</script>
+    </script>
 
 </body>
 

@@ -26,6 +26,31 @@ function is_connected()
 	}
 }
 
+function checkRole()
+{
+	if (isset($_SESSION['role']) && !empty($_SESSION['role'])) {
+		if ($_SESSION['role'] != "ADMIN") {
+			echo "<script>alert('Accès refusé !');</script>";
+			echo '<script> window.location="deconnexion.php"</script>';
+		}
+	} else {
+		echo "<script>alert('Veuillez vous connecter avant de continuer !');</script>";
+		echo '<script> window.location="deconnexion.php"</script>';
+	}
+}
+
+function hasInvalidString(...$strings)
+{
+	if ($strings === null) {
+		return true;
+	}
+	foreach ($strings as $string) {
+		if ($string === null || trim($string) === '') {
+			return true;
+		}
+	}
+	return false;
+}
 
 function generateRandomSerialNumber(int $val)
 {
