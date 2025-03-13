@@ -14,9 +14,9 @@ function confirmInputSweetAlert(msg = "") {
   return Swal.fire({
     title: "Confirmation",
     text: msg,
-    input:"number",
+    input: "number",
     inputAttributes: {
-      min: 0
+      min: 0,
     },
     showConfirmButton: true,
     showDenyButton: true,
@@ -50,7 +50,23 @@ function errorSweetAlert(msg = "", timer = 2000) {
 function temps() {
   const heure = new Date().getHours();
   const temps = document.getElementById("temps");
-  temps.innerText = heure < 12 ? "Bonjour" : "Bonsoir";
+  if (temps) temps.innerText = heure < 12 ? "Bonjour" : "Bonsoir";
 }
 
 temps();
+
+function ajaxRequest(method, url, data) {
+  $.ajax({
+    type: method,
+    url: url,
+    data: data,
+    dataType: "json",
+    success: function (response) {
+      if (response.code === 200) {
+        successSweetAlert(response.message);
+      } else if (response.code === 400 || response.code === 500) {
+        errorSweetAlert(response.message);
+      }
+    },
+  });
+}

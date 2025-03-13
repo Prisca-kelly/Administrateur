@@ -6,6 +6,7 @@ if (!is_connected()) {
     echo "<script>alert('Veuillez vous connecter avant de continuer !');</script>";
     echo '<script> window.location="index.php"</script>';
 }
+checkRole();
 $page = "Accueil";
 
 function countTout($table): int
@@ -129,33 +130,33 @@ function getLastReservations()
                                         </h5>
                                     </div>
                                     <div class="card-body">
-                                    <ul class="p-0 m-0">
-    <?php
-    $lastReservations = getLastReservations();
-    $totalReservations = count($lastReservations);
-    if ($totalReservations > 0) {
-        foreach ($lastReservations as $item) { ?>
-            <li class="d-flex mb-4 pb-1">
-                <div class="avatar flex-shrink-0 me-3 bg-label-success d-flex justify-content-center align-items-center">
-                    <i class="bx bx-calendar"></i>
-                </div>
-                <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
-                    <div class="me-2">
-                        <small class="text-muted d-block mb-1">
-                            <?= $item['destination'] ?> <?= $item['date_depart'] ?> - <?= $item['date_retour'] ?>
-                        </small>
-                        <h6 class="mb-0">
-                            <?= $item['nom'] ?>
-                        </h6>
-                    </div>
-                </div>
-            </li>
-        <?php }
-    } else {
-        echo "<h6 class='text-center'>Aucune réservation enregistrée !</h6>";
-    }
-    ?>
-</ul>
+                                        <ul class="p-0 m-0">
+                                            <?php
+                                            $lastReservations = getLastReservations();
+                                            $totalReservations = count($lastReservations);
+                                            if ($totalReservations > 0) {
+                                                foreach ($lastReservations as $item) { ?>
+                                                    <li class="d-flex mb-4 pb-1">
+                                                        <div class="avatar flex-shrink-0 me-3 bg-label-success d-flex justify-content-center align-items-center">
+                                                            <i class="bx bx-calendar"></i>
+                                                        </div>
+                                                        <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
+                                                            <div class="me-2">
+                                                                <small class="text-muted d-block mb-1">
+                                                                    <?= $item['destination'] ?> <?= $item['date_depart'] ?> - <?= $item['date_retour'] ?>
+                                                                </small>
+                                                                <h6 class="mb-0">
+                                                                    <?= $item['nom'] ?>
+                                                                </h6>
+                                                            </div>
+                                                        </div>
+                                                    </li>
+                                            <?php }
+                                            } else {
+                                                echo "<h6 class='text-center'>Aucune réservation enregistrée !</h6>";
+                                            }
+                                            ?>
+                                        </ul>
                                     </div>
                                 </div>
                             </div>

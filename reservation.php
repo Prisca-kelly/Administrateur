@@ -7,6 +7,7 @@ if (!is_connected()) {
     echo "<script>alert('Veuillez vous connecter avant de continuer !');</script>";
     echo '<script> window.location="index.php"</script>';
 }
+checkRole();
 $page = "Réservation";  // Page actuelle
 
 // Mise à jour des informations d'une réservation
@@ -317,7 +318,7 @@ $reservations = $bdd->query("SELECT r.*, u.nom AS nom_utilisateur, d.nom AS nom_
                         $('#dMontant').text(res.reservation.montant + " FCFA");
                         $('#dRemarques').text(res.reservation.remarques);
                         $('#dStatut').text(res.reservation.statut);
-                        if(res.paiement && res.paiement != null){
+                        if (res.paiement && res.paiement != null) {
                             $('#paiementInfo').removeClass("d-none")
                             $('#dNomModepaiement').text(res.paiement.nom_modepaiement);
                             $('#dDatePaiement').text(res.paiement.date_paiement);
