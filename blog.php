@@ -9,99 +9,9 @@ if (!is_connected()) {
 checkRole();
 $page = "Blog";
 
-// Ajouter un article
-if (isset($_POST["ajouter"])) {
-    if (!empty($_POST["titre"]) && !empty($_POST["contenu"]) && !empty($_FILES["image"]["name"])) {
-        $titre = htmlspecialchars($_POST["titre"]);
-        $contenu = htmlspecialchars($_POST["contenu"]);
-
-        // Gestion de l'upload d'image
-        $image = $_FILES["image"]["name"];
-        $target_dir = "uploads/";
-        if (!file_exists($target_dir)) {
-            mkdir($target_dir, 0777, true);
-        }
-        $target_file = $target_dir . basename($image);
-
-        if (move_uploaded_file($_FILES["image"]["tmp_name"], $target_file)) {
-            try {
-                $sql = "INSERT INTO articleblog (titre, contenu, image, statut) VALUES (:titre, :contenu, :image, 1)";
-                $stmt = $bdd->prepare($sql);
-                $stmt->execute([
-                    ':titre' => $titre,
-                    ':contenu' => $contenu,
-                    ':image' => $image
-                ]);
-                echo "<script>alert('✅ Article ajouté avec succès.'); window.location.href='blog.php';</script>";
-            } catch (PDOException $e) {
-                echo "<script>alert('❌ Erreur : " . $e->getMessage() . "');</script>";
-            }
-        } else {
-            echo "<script>alert('❌ Erreur lors du téléchargement de l\'image.');</script>";
-        }
-    } else {
-        echo "<script>alert('❌ Veuillez remplir tous les champs.');</script>";
-    }
-}
-
 // Récupération des articles avec la colonne statut
-$sqlArticle = $bdd->query("SELECT id_article, titre, contenu, image, statut FROM articleblog");
+$sqlArticle = $bdd->query("SELECT id_article, titre, contenu, image, date_publication, statut FROM articleblog WHERE statut <>'supprimé'");
 $articles = $sqlArticle->fetchAll();
-
-// Modifier un article
-if (isset($_POST['modifier'])) {
-    $id_article = $_POST['id_article'];
-    $titre = htmlspecialchars($_POST['titre']);
-    $contenu = htmlspecialchars($_POST['contenu']);
-    $image = $_FILES['image']['name'] ? $_FILES['image']['name'] : $_POST['image_old'];
-
-    if ($_FILES['image']['name']) {
-        // Gestion de l'upload d'image
-        $target_dir = "uploads/";
-        $target_file = $target_dir . basename($image);
-        move_uploaded_file($_FILES['image']['tmp_name'], $target_file);
-    }
-
-    $sql = "UPDATE articleblog SET titre = :titre, contenu = :contenu, image = :image WHERE id_article = :id_article";
-    $stmt = $bdd->prepare($sql);
-    $stmt->execute([
-        ':titre' => $titre,
-        ':contenu' => $contenu,
-        ':image' => $image,
-        ':id_article' => $id_article
-    ]);
-
-    echo "<script>alert('✅ Article modifié avec succès.'); window.location.href='blog.php';</script>";
-}
-
-// Changer le statut en "Supprimé" au lieu de supprimer l'article
-if (isset($_POST['delete_article'])) {
-    $id_article = $_POST['delete_article'];
-
-    // Met à jour le statut de l'article en "Supprimé"
-    $sql = "UPDATE articleblog SET statut = 'Supprimé' WHERE id_article = :id_article";
-    $stmt = $bdd->prepare($sql);
-    $stmt->execute([
-        ':id_article' => $id_article
-    ]);
-
-    echo "<script>alert('✅ Article marqué comme supprimé.'); window.location.href='blog.php';</script>";
-}
-
-// Changer le statut de l'article
-if (isset($_POST['changer_statut'])) {
-    $id_article = $_POST['id_article'];
-    $statut = $_POST['statut'] == 'publié' ? 'non-publié' : 'publié'; // Inverse le statut (chaîne de caractères)
-
-    $sql = "UPDATE articleblog SET statut = :statut WHERE id_article = :id_article";
-    $stmt = $bdd->prepare($sql);
-    $stmt->execute([
-        ':statut' => $statut,
-        ':id_article' => $id_article
-    ]);
-
-    echo "<script>alert('✅ Statut changé avec succès.'); window.location.href='blog.php';</script>";
-}
 ?>
 
 <!DOCTYPE html>
@@ -111,6 +21,7 @@ if (isset($_POST['changer_statut'])) {
     <?php include "include/common/head.php"; ?>
     <title><?= $page ?></title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css" rel="stylesheet" />
 </head>
 
 <body>
@@ -135,7 +46,7 @@ if (isset($_POST['changer_statut'])) {
                                     <thead>
                                         <tr>
                                             <th>Titre</th>
-                                            <th>Contenu</th>
+                                            <th>Date de création</th>
                                             <th>Image</th>
                                             <th>Statut</th>
                                             <th>Actions</th>
@@ -149,105 +60,47 @@ if (isset($_POST['changer_statut'])) {
                                         foreach ($articles as $article) : ?>
                                             <tr>
                                                 <td><?= htmlspecialchars($article['titre']) ?></td>
-                                                <td><?= htmlspecialchars(substr($article['contenu'], 0, 100)) ?>...</td>
+                                                <td><?= htmlspecialchars($article['date_publication']) ?></td>
                                                 <td><img src="uploads/<?= htmlspecialchars($article['image']) ?>" width="80"
                                                         height="60"></td>
                                                 <td>
                                                     <?php if ($article['statut'] == 'publié'): ?>
-                                                        <span>Publié</span>
+                                                        <span class="text-success">Publié</span>
                                                     <?php elseif ($article['statut'] == 'non-publié'): ?>
-                                                        <span>Non publié</span>
+                                                        <span class="text-warning">Non publié</span>
                                                     <?php elseif ($article['statut'] == 'supprimé'): ?>
                                                         <span class="text-danger">Supprimé</span>
                                                     <?php endif; ?>
                                                 </td>
                                                 <td>
                                                     <!-- Bouton Modifier -->
-                                                    <button class="btn btn-no-style" data-bs-toggle="modal"
-                                                        data-bs-target="#editBlogModal<?= $article['id_article'] ?>">
+                                                    <button class="btn btn-no-style" onclick='showUpdatModal("<?= addslashes(json_encode($article)) ?>")'>
                                                         <i class="fa-solid fa-pen-to-square"></i>
                                                     </button>
-
-                                                    <!-- Bouton Marquer comme Supprimé -->
-                                                    <form action="blog.php" method="POST" style="display:inline;">
-                                                        <input type="hidden" name="delete_article" value="<?= $article['id_article'] ?>">
-                                                        <button type="submit" class="btn btn-link text-danger"
-                                                            onclick="return confirm('Êtes-vous sûr de vouloir marquer cet article comme supprimé ?')">
+                                                    <?php
+                                                    if ($article['statut'] === "publié") { ?>
+                                                        <a href="#!" class="text-warning me-3" data-bs-toggle="tooltip" data-bs-placement="top"
+                                                            title="Masquer" onclick="updateStatus(<?= $article['id_article'] ?>, 'non-publié')">
+                                                            <i class="fas fa-eye-slash"></i>
+                                                        </a>
+                                                        <a href="#!" class="text-danger me-3" data-bs-toggle="tooltip" data-bs-placement="top"
+                                                            title="Supprimer" onclick="updateStatus(<?= $article['id_article'] ?>, 'supprimé')">
                                                             <i class="fas fa-trash-alt"></i>
-                                                        </button>
-                                                    </form>
-
-                                                    <!-- Bouton Changer le Statut avec icônes -->
-                                                    <form action="blog.php" method="POST" style="display:inline;">
-                                                        <input type="hidden" name="id_article"
-                                                            value="<?= $article['id_article'] ?>">
-                                                        <input type="hidden" name="statut"
-                                                            value="<?= $article['statut'] ?>">
-                                                        <button type="submit" class="btn btn-no-style text-primary"
-                                                            name="changer_statut">
-                                                            <?php if ($article['statut'] == 1): ?>
-                                                                <i class="fa-solid fa-toggle-on"></i> <!-- Statut publié -->
-                                                            <?php else: ?>
-                                                                <i class="fa-solid fa-toggle-off"></i>
-                                                                <!-- Statut non publié -->
-                                                            <?php endif; ?>
-                                                        </button>
-                                                    </form>
+                                                        </a>
+                                                    <?php } else { ?>
+                                                        <a href="#!" class="text-success me-3" data-bs-toggle="tooltip" data-bs-placement="top"
+                                                            title="Publier" onclick="updateStatus(<?= $article['id_article'] ?>, 'publié')">
+                                                            <i class="fas fa-paper-plane"></i>
+                                                        </a>
+                                                        <a href="#!" class="text-danger me-3" data-bs-toggle="tooltip" data-bs-placement="top"
+                                                            title="Supprimer" onclick="updateStatus(<?= $article['id_article'] ?>, 'supprimé')">
+                                                            <i class="fas fa-trash-alt"></i>
+                                                        </a>
+                                                    <?php } ?>
                                                 </td>
                                             </tr>
 
                                             <!-- Modal Modifier Article -->
-                                            <div class="modal fade" id="editBlogModal<?= $article['id_article'] ?>"
-                                                tabindex="-1"
-                                                aria-labelledby="editBlogModalLabel<?= $article['id_article'] ?>"
-                                                aria-hidden="true">
-                                                <div class="modal-dialog">
-                                                    <div class="modal-content">
-                                                        <div class="modal-header">
-                                                            <h5 class="modal-title"
-                                                                id="editBlogModalLabel<?= $article['id_article'] ?>">
-                                                                Modifier l'article</h5>
-                                                            <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                                                aria-label="Close"></button>
-                                                        </div>
-                                                        <div class="modal-body">
-                                                            <form action="blog.php" method="post"
-                                                                enctype="multipart/form-data">
-                                                                <input type="hidden" name="id_article"
-                                                                    value="<?= $article['id_article'] ?>">
-                                                                <input type="hidden" name="image_old"
-                                                                    value="<?= $article['image'] ?>">
-
-                                                                <div class="mb-3">
-                                                                    <label class="form-label">Titre</label>
-                                                                    <input type="text" class="form-control" name="titre"
-                                                                        value="<?= htmlspecialchars($article['titre']) ?>"
-                                                                        required>
-                                                                </div>
-                                                                <div class="mb-3">
-                                                                    <label class="form-label">Contenu</label>
-                                                                    <textarea class="form-control" name="contenu" required>
-                                                                        <?= htmlspecialchars($article['contenu']) ?>
-                                                                    </textarea>
-                                                                </div>
-                                                                <div class="mb-3">
-                                                                    <label class="form-label">Image</label>
-                                                                    <input type="file" class="form-control" name="image"
-                                                                        accept="image/*">
-                                                                    <img src="uploads/<?= htmlspecialchars($article['image']) ?>"
-                                                                        width="80" height="60" class="mt-2">
-                                                                </div>
-                                                                <div class="modal-footer">
-                                                                    <button type="button" class="btn btn-outline-secondary"
-                                                                        data-bs-dismiss="modal">Annuler</button>
-                                                                    <button class="btn btn-primary" type="submit"
-                                                                        name="modifier">Enregistrer</button>
-                                                                </div>
-                                                            </form>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
                                         <?php endforeach; ?>
                                     </tbody>
                                 </table>
@@ -271,20 +124,56 @@ if (isset($_POST['changer_statut'])) {
                     <form action="blog.php" method="post" enctype="multipart/form-data">
                         <div class="mb-3">
                             <label class="form-label">Titre</label>
-                            <input type="text" class="form-control" name="titre" required>
+                            <input type="text" class="form-control" id="titre" name="titre" required>
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Contenu</label>
-                            <textarea class="form-control" name="contenu" required></textarea>
+                            <div id="editor"></div>
+                            <textarea class="form-control d-none" id="contenu" name="contenu"></textarea>
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Image</label>
-                            <input type="file" class="form-control" name="image" accept="image/*" required>
+                            <input type="file" class="form-control" id="image" name="image" accept="image/*" required>
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-outline-secondary"
                                 data-bs-dismiss="modal">Annuler</button>
-                            <button class="btn btn-primary" type="submit" name="ajouter">Enregistrer</button>
+                            <button class="btn btn-primary" type="submit" id="ajouter" name="ajouter">Enregistrer</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="editBlogModal" tabindex="-1" aria-labelledby="editBlogModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editBlogModalLabel"> Modifier l'article</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form>
+                        <input type="hidden" id="id_article" name="id_article">
+                        <input type="hidden" id="image_old" name="image_old">
+                        <div class="mb-3">
+                            <label class="form-label">Titre</label>
+                            <input type="text" class="form-control" id="uTitre" name="titre" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Contenu</label>
+                            <div id="uEditor"></div>
+                            <textarea class="form-control d-none" id="uContenu" name="contenu"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Image</label>
+                            <input type="file" class="form-control" id="uImage" name="image" accept="image/*">
+                            <img src="uploads/" id="imgPreview" width="80" height="60" class="mt-2">
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
+                            <button class="btn btn-primary" type="submit" id="modifier" name="modifier">Enregistrer</button>
                         </div>
                     </form>
                 </div>
@@ -292,6 +181,131 @@ if (isset($_POST['changer_statut'])) {
         </div>
     </div>
     <?php include "include/common/script.php"; ?>
+    <script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
+    <script>
+        var quill = new Quill('#editor', {
+            theme: 'snow',
+            modules: {
+                toolbar: [
+                    [{
+                        'header': [1, 2, 3, 4, 5, 6, false]
+                    }],
+                    ['bold', 'italic', 'underline', 'strike'],
+                    ['link', ]
+                ]
+            },
+            placeholder: 'Écrivez quelque chose...'
+        });
+        quill.on('text-change', function() {
+            $('#contenu').val(quill.root.innerHTML)
+        });
+
+        var uQuill = new Quill('#uEditor', {
+            theme: 'snow',
+            modules: {
+                toolbar: [
+                    [{
+                        'header': [1, 2, 3, 4, 5, 6, false]
+                    }],
+                    ['bold', 'italic', 'underline', 'strike'],
+                    ['link', ]
+                ]
+            },
+            placeholder: 'Écrivez quelque chose...'
+        });
+        uQuill.on('text-change', function() {
+            $('#uContenu').val(uQuill.root.innerHTML)
+        });
+    </script>
+
+    <script>
+        function showUpdatModal(data) {
+            let res = JSON.parse(data);
+            $('#uTitre').val(res.titre);
+            $('#uContenu').val(res.contenu);
+            $('#image_old').val(res.image);
+            $('#id_article').val(res.id_article)
+            $('#imgPreview').prop("src", "uploads/" + res.image)
+            uQuill.clipboard.dangerouslyPasteHTML(res.contenu);
+            var editBlogModal = new bootstrap.Modal(document.getElementById('editBlogModal'));
+            editBlogModal.show();
+        }
+    </script>
+
+    <script>
+        $('#modifier').click((e) => {
+            e.preventDefault();
+            let formData = new FormData();
+            formData.append('titre', $('#uTitre').val());
+            formData.append('contenu', $('#uContenu').val());
+            formData.append('imageName', $('#image_old').val());
+            formData.append('id_article', $('#id_article').val());
+            formData.append('image', $('#uImage')[0].files[0]);
+            formData.append('modifier', 'modifier');
+            $.ajax({
+                type: "post",
+                url: "model/app/blog.php",
+                data: formData,
+                dataType: "json",
+                processData: false,
+                contentType: false,
+                success: function(res) {
+                    if (res.code === 200) {
+                        successSweetAlert(res.message);
+                    } else if (res.code === 400 || res.code === 500) {
+                        errorSweetAlert(res.message);
+                    }
+                }
+            });
+        })
+        $('#ajouter').click((e) => {
+            e.preventDefault();
+            let formData = new FormData();
+            formData.append('titre', $('#titre').val());
+            formData.append('contenu', $('#contenu').val());
+            formData.append('image', $('#image')[0].files[0]);
+            formData.append('ajouter', 'ajouter');
+            $.ajax({
+                type: "post",
+                url: "model/app/blog.php",
+                data: formData,
+                dataType: "json",
+                processData: false,
+                contentType: false,
+                success: function(res) {
+                    if (res.code === 200) {
+                        successSweetAlert(res.message);
+                    } else if (res.code === 400 || res.code === 500) {
+                        errorSweetAlert(res.message);
+                    }
+                }
+            });
+        })
+
+
+        function updateStatus(id_article, statut) {
+            let data = {
+                id_article: id_article,
+                statut: statut,
+                changer_statut: "changer_statut",
+            };
+            let verbe = null;
+
+            if (statut == "publié") {
+                verbe = "publier";
+            } else if (statut == "non-publié") {
+                verbe = "masquer";
+            } else {
+                verbe = "supprimer";
+            }
+
+            confirmSweetAlert("Voulez-vous vraiment " + verbe + " ce article de blog ?").then((out) => {
+                if (out.isConfirmed) {
+                    ajaxRequest("post", "model/app/blog.php", data);
+                }
+            })
+        }
+    </script>
 </body>
 
 </html>
