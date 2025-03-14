@@ -52,6 +52,12 @@ function hasInvalidString(...$strings)
 	return false;
 }
 
+function chechUploarDirectory($target_dir)
+{
+	if (!file_exists($target_dir)) {
+		mkdir($target_dir, 0777, true);
+	}
+}
 function generateRandomSerialNumber(int $val)
 {
 	$letter = [
@@ -81,6 +87,32 @@ function generateRandomSerialNumber(int $val)
 		'X',
 		'Y',
 		'Z',
+		"a",
+		"b",
+		"c",
+		"d",
+		"e",
+		"f",
+		"g",
+		"h",
+		"i",
+		"j",
+		"k",
+		"l",
+		"m",
+		"n",
+		"o",
+		"p",
+		"q",
+		"r",
+		"s",
+		"t",
+		"u",
+		"v",
+		"w",
+		"x",
+		"y",
+		"z",
 		'0',
 		'1',
 		'2',
