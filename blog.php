@@ -133,7 +133,7 @@ $articles = $sqlArticle->fetchAll();
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Image</label>
-                            <input type="file" class="form-control" id="image" name="image" accept="image/*" required>
+                            <input type="file" class="form-control" id="image" name="image" accept=".png, .jpg, .jpeg" required>
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-outline-secondary"
@@ -168,7 +168,7 @@ $articles = $sqlArticle->fetchAll();
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Image</label>
-                            <input type="file" class="form-control" id="uImage" name="image" accept="image/*">
+                            <input type="file" class="form-control" id="uImage" name="image" accept=".png, .jpg, .jpeg">
                             <img src="uploads/" id="imgPreview" width="80" height="60" class="mt-2">
                         </div>
                         <div class="modal-footer">

@@ -9,68 +9,6 @@ if (!is_connected()) {
 }
 checkRole();
 $page = "Mode de Paiement";  // Page actuelle
-
-// Mise à jour des informations d'un mode de paiement
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_modepaiement'])) {
-    $id_modepaiement = $_POST['id_modepaiement'];
-    $nom_modepaiement = htmlspecialchars($_POST['nom_modepaiement']);
-    $description = htmlspecialchars($_POST['description']); // Récupérer les détails
-    $statut = htmlspecialchars($_POST['statut']); // Récupérer le statut
-
-    $stmt = $bdd->prepare("UPDATE modepaiement SET nom_modepaiement = :nom_modepaiement, description = :description, statut = :statut WHERE id_modepaiement = :id_modepaiement");
-    $stmt->execute([
-        ':nom_modepaiement' => $nom_modepaiement,
-        ':description' => $description,
-        ':statut' => $statut,
-        ':id_modepaiement' => $id_modepaiement
-    ]);
-    echo "<script>alert('Mise à jour réussie !');</script>";
-}
-
-// Suppression d'un mode de paiement
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_modepaiement'])) {
-    $id_modepaiement = $_POST['delete_modepaiement'];
-
-    // Mettre à jour le statut à "supprimé"
-    $stmt = $bdd->prepare("UPDATE modepaiement SET statut = 'supprimé' WHERE id_modepaiement = :id_modepaiement");
-    $stmt->execute([':id_modepaiement' => $id_modepaiement]);
-
-    echo "success";
-    exit;
-}
-
-// Mise à jour du statut d'un mode de paiement
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_status'])) {
-    $id_modepaiement = $_POST['id_modepaiement'];
-    $new_status = $_POST['new_status'];
-
-    // Mettre à jour le statut en base de données
-    $stmt = $bdd->prepare("UPDATE modepaiement SET statut = :new_status WHERE id_modepaiement = :id_modepaiement");
-    $stmt->execute([
-        ':new_status' => $new_status,
-        ':id_modepaiement' => $id_modepaiement
-    ]);
-
-    echo "success"; // Réponse pour indiquer le succès
-    exit;
-}
-
-// Ajout d'un mode de paiement
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_modepaiement'])) {
-    $nom_modepaiement = htmlspecialchars($_POST['nom_modepaiement']);
-    $description = htmlspecialchars($_POST['description']);
-    $statut = htmlspecialchars($_POST['statut']); // Ajouter statut
-
-    $stmt = $bdd->prepare("INSERT INTO modepaiement (nom_modepaiement, description, statut) VALUES (:nom_modepaiement, :description, :statut)");
-    $stmt->execute([
-        ':nom_modepaiement' => $nom_modepaiement,
-        ':description' => $description,
-        ':statut' => $statut
-    ]);
-    echo "<script>alert('Mode de paiement ajouté avec succès !');</script>";
-}
-
-
 // Récupérer tous les modes de paiement
 $sqlModePaiement = $bdd->query("SELECT id_modepaiement, nom_modepaiement, description, statut FROM modepaiement");
 $modePaiements = $sqlModePaiement->fetchAll();
@@ -131,11 +69,11 @@ $modePaiements = $sqlModePaiement->fetchAll();
                                                             $statusText = 'Actif';
                                                             break;
                                                         case 'inactif':
-                                                            $statusClass = 'text-danger';
+                                                            $statusClass = 'text-warning';
                                                             $statusText = 'Inactif';
                                                             break;
                                                         case 'supprimé':
-                                                            $statusClass = 'text-muted';
+                                                            $statusClass = 'text-danger';
                                                             $statusText = 'Supprimé';
                                                             break;
                                                     }
@@ -143,25 +81,38 @@ $modePaiements = $sqlModePaiement->fetchAll();
                                                     <span class="<?= $statusClass ?>"><?= $statusText ?></span>
                                                 </td>
                                                 <td>
-                                                    <!-- Bouton pour changer le statut -->
-                                                    <a href="#"
-                                                        class="text-primary toggle-status me-2"
-                                                        data-id="<?= $mode['id_modepaiement'] ?>"
-                                                        data-status="<?= $mode['statut'] ?>">
-                                                        <i class="fas fa-sync-alt"></i>
-                                                    </a>
 
                                                     <!-- Bouton pour modifier -->
                                                     <a href="#"
-                                                        onclick="showEditModal('<?= $mode['id_modepaiement'] ?>', '<?= $mode['nom_modepaiement'] ?>', '<?= $mode['description'] ?>', '<?= $mode['statut'] ?>')"
+                                                        onclick="showEditModal('<?= $mode['id_modepaiement'] ?>', '<?= $mode['nom_modepaiement'] ?>', '<?= $mode['description'] ?>')"
                                                         class="text-warning me-2">
                                                         <i class="fas fa-edit text-primary" data-bs-toggle="modal" data-bs-target="#updateModePaiementModal"></i>
                                                     </a>
+                                                    <?php
+                                                    if ($mode['statut'] == "inactif" || $mode['statut'] == "supprimé") { ?>
+                                                        <a href="#"
+                                                            class="text-success me-2" data-bs-toggle="tooltip" data-bs-placement="top"
+                                                            title="Activer"
+                                                            onclick="changeStatus(<?= $mode['id_modepaiement'] ?>,'actif')">
+                                                            <i class="fas fa-lock-open"></i>
+                                                        </a>
+                                                    <?php } elseif ($mode['statut'] == "actif") { ?>
+                                                        <a href="#"
+                                                            class="text-warning me-2" data-bs-toggle="tooltip" data-bs-placement="top"
+                                                            title="Désactiver"
+                                                            onclick="changeStatus(<?= $mode['id_modepaiement'] ?>,'inactif')">
+                                                            <i class="fas fa-lock"></i>
+                                                        </a>
 
-                                                    <!-- Bouton pour supprimer -->
-                                                    <a href="#" onclick="markAsDeleted('<?= $mode['id_modepaiement'] ?>')" class="text-danger">
-                                                        <i class="fas fa-trash-alt"></i>
-                                                    </a>
+                                                    <?php }
+                                                    if ($mode['statut'] != "supprimé") { ?>
+                                                        <a href="#"
+                                                            class="text-danger me-2" data-bs-toggle="tooltip" data-bs-placement="top"
+                                                            title="Supprimer"
+                                                            onclick="changeStatus(<?= $mode['id_modepaiement'] ?>,'supprimé')">
+                                                            <i class="fas fa-trash"></i>
+                                                        </a>
+                                                    <?php } ?>
                                                 </td>
                                             </tr>
                                         <?php endforeach; ?>
@@ -192,17 +143,10 @@ $modePaiements = $sqlModePaiement->fetchAll();
                         <label for="description" class="form-label">Description</label>
                         <input type="text" class="form-control" id="description" name="description" required>
                     </div>
-                    <div class="mb-3">
-                        <label for="statut" class="form-label">Statut</label>
-                        <select class="form-control" id="statut" name="statut" required>
-                            <option value="actif">Actif</option>
-                            <option value="inactif">Inactif</option>
-                        </select>
-                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
-                    <button class="btn btn-primary" type="submit" name="add_modepaiement">Ajouter</button>
+                    <button class="btn btn-primary" type="submit" id="add_modepaiement" name="add_modepaiement">Ajouter</button>
                 </div>
             </div>
         </form>
@@ -228,7 +172,7 @@ $modePaiements = $sqlModePaiement->fetchAll();
                     <input type="number" id="id_modepaiement" name="id_modepaiement" hidden>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
-                        <button class="btn btn-primary" type="submit" name="update_modepaiement">Mise à jour</button>
+                        <button class="btn btn-primary" type="submit" id="update_modepaiement" name="update_modepaiement">Mise à jour</button>
                     </div>
                 </div>
         </form>
@@ -237,62 +181,53 @@ $modePaiements = $sqlModePaiement->fetchAll();
     <?php include "include/common/script.php"; ?>
 
     <script>
-        document.querySelectorAll('.toggle-status').forEach(button => {
-            button.addEventListener('click', function(e) {
-                e.preventDefault();
-
-                let idModePaiement = this.getAttribute('data-id');
-                let currentStatus = this.getAttribute('data-status');
-
-                // Changer le statut
-                let newStatus = (currentStatus === 'actif') ? 'inactif' : 'actif';
-
-                let formData = new FormData();
-                formData.append('update_status', true);
-                formData.append('id_modepaiement', idModePaiement);
-                formData.append('new_status', newStatus);
-
-                fetch('modepaiement.php', {
-                        method: 'POST',
-                        body: formData
-                    })
-                    .then(response => response.text())
-                    .then(data => {
-                        if (data === 'success') {
-                            // Actualiser la page ou changer dynamiquement le statut
-                            location.reload(); // Recharger pour voir le changement
-                        } else {
-                            alert('Erreur lors de la mise à jour du statut.');
-                        }
-                    });
-            });
-        });
-
-        // Gestion des modes de paiement supprimés
-        function markAsDeleted(idModePaiement) {
-            if (confirm("Êtes-vous sûr de vouloir marquer ce mode de paiement comme supprimé ?")) {
-                let formData = new FormData();
-                formData.append("delete_modepaiement", idModePaiement);
-
-                fetch("modepaiement.php", {
-                    method: "POST",
-                    body: formData,
-                }).then(response => response.text()).then(data => {
-                    if (data === "success") {
-                        location.reload(); // Recharger la page pour voir les changements
-                    } else {
-                        alert("Erreur lors de la suppression.");
-                    }
-                });
+        $('#add_modepaiement').click((e) => {
+            e.preventDefault();
+            let data = {
+                nom_modepaiement: $('#nom_modepaiement').val(),
+                description: $('#description').val(),
+                add_modepaiement: "add_modepaiement",
             }
-        }
+            ajaxRequest("post", "model/app/modepaiement.php", data);
+        })
 
+        $('#update_modepaiement').click((e) => {
+            e.preventDefault();
+            let data = {
+                nom_modepaiement: $('#uNom').val(),
+                description: $('#uDescription').val(),
+                id_modepaiement: $('#id_modepaiement').val(),
+                update_modepaiement: "update_modepaiement",
+            }
+            ajaxRequest("post", "model/app/modepaiement.php", data);
+        })
         // Préremplir le modal de modification
-        function showEditModal(id, nom, description, statut) {
+        function showEditModal(id, nom, description) {
             document.getElementById("id_modepaiement").value = id;
             document.getElementById("uNom").value = nom;
             document.getElementById("uDescription").value = description;
-            document.getElementById("uStatut").value = statut;
+        }
+
+        // Activer, bloquer et supprimer un utilisateur
+        function changeStatus(id_modepaiement, statut) {
+            let data = {
+                id_modepaiement: id_modepaiement,
+                statut: statut,
+                updateStatus: "updateStatus",
+            };
+            let verbe = null;
+            if (statut == "actif") {
+                verbe = "activer";
+            } else if (statut == "inactif") {
+                verbe = "désactiver";
+            } else {
+                verbe = "supprimer";
+            }
+            confirmSweetAlert("Voulez-vous vraiment " + verbe + " ce mode de paiement ?").then((out) => {
+                if (out.isConfirmed) {
+                    ajaxRequest("post", "model/app/modepaiement.php", data);
+                }
+            })
         }
     </script>
 </body>
