@@ -113,7 +113,11 @@ $reservations = $bdd->query("SELECT r.*, u.nom AS nom_utilisateur, d.nom AS nom_
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <?php foreach ($reservations as $reservation) : ?>
+                                        <?php
+                                        if (count($reservations) == 0) {
+                                            echo '<tr><td colspan="7" class="text-center">Aucune reservation !</td></tr>';
+                                        }
+                                        foreach ($reservations as $reservation) : ?>
                                             <tr>
                                                 <td><?= htmlspecialchars($reservation['nom_utilisateur']) ?></td>
                                                 <td> <?= htmlspecialchars($reservation['nom_destination']) ?></td>
