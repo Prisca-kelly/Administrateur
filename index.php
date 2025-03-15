@@ -95,13 +95,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 <button class="btn btn-primary d-grid w-100" id="login" type="submit">Connexion</button>
                             </div>
                         </form>
-
-                        <p class="text-center">
-                            <span>Nouveau sur notre plateforme ?</span>
-                            <a href="Formulaire.php">
-                                <span>Créer un compte</span>
-                            </a>
-                        </p>
                     </div>
                 </div>
                 <!-- /Connexion -->
