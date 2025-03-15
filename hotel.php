@@ -10,33 +10,6 @@ if (!is_connected()) {
 checkRole();
 $page = "Hotel";  // Page actuelle
 
-// Gestion de l'ajout d'un hôtel
-if (isset($_POST['add_hotel'])) {
-    $nom = $_POST['nom'];
-    $description = $_POST['description'];
-    $prix = $_POST['prix'];
-    $ville = $_POST['ville'];
-    $dure = $_POST['dure'];
-
-    // Gestion de l'upload d'image
-    $image = $_FILES['image']['name'];
-    $target_dir = "uploads/";  // Dossier de base 'uploads'
-    $target_file = $target_dir . basename($image);
-
-    // Vérifiez et déplacez l'image téléchargée
-    if (move_uploaded_file($_FILES['image']['tmp_name'], $target_file)) {
-        // Insertion dans la base de données
-        $query = $bdd->prepare("INSERT INTO hotel (image, nom, description, prix, ville, dure, statut) VALUES (?, ?, ?, ?, ?, ?, 'activé')");
-        $query->execute([$target_file, $nom, $description, $prix, $ville, $dure]);
-
-        // Redirection pour éviter le renvoi du formulaire
-        header("Location: hotel.php");
-        exit();
-    } else {
-        echo "Erreur lors de l'upload de l'image.";
-    }
-}
-
 // Récupération des hôtels depuis la base de données
 $hotels = $bdd->query("SELECT id_hotel, image, nom, description, prix, ville, dure, statut FROM hotel")->fetchAll();
 ?>
@@ -83,7 +56,7 @@ $hotels = $bdd->query("SELECT id_hotel, image, nom, description, prix, ville, du
                                         <?php foreach ($hotels as $hotel) : ?>
                                             <tr>
                                                 <td>
-                                                    <img src="<?= htmlspecialchars($hotel['image']) ?>"
+                                                    <img src="uploads/<?= htmlspecialchars($hotel['image']) ?>"
                                                         alt="Image de l'hôtel"
                                                         style="width: 80px; height: 60px; object-fit: cover;">
                                                 </td>
@@ -209,7 +182,11 @@ $hotels = $bdd->query("SELECT id_hotel, image, nom, description, prix, ville, du
                             <label for="dure" class="form-label">Durée (en jours)</label>
                             <input type="number" class="form-control" id="dure" name="dure" required>
                         </div>
-                        <button type="submit" class="btn btn-primary" name="add_hotel">Ajouter</button>
+                        <div class="mb-3">
+                            <label class="form-label">Image</label>
+                            <input type="file" class="form-control" id="image" name="image" accept="image/*" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary" id="add_hotel" name="add_hotel">Ajouter</button>
                     </form>
                 </div>
             </div>
@@ -227,6 +204,7 @@ $hotels = $bdd->query("SELECT id_hotel, image, nom, description, prix, ville, du
                 <div class="modal-body">
                     <form method="POST">
                         <input type="hidden" id="id_hotel" name="id_hotel">
+                        <input type="hidden" id="image_old" name="image_old">
                         <div class="mb-3">
                             <label for="edit_nom" class="form-label">Nom</label>
                             <input type="text" class="form-control" id="edit_nom" name="nom" required>
@@ -247,6 +225,11 @@ $hotels = $bdd->query("SELECT id_hotel, image, nom, description, prix, ville, du
                             <label for="edit_dure" class="form-label">Durée (en jours)</label>
                             <input type="number" class="form-control" id="edit_dure" name="dure" required>
                         </div>
+                        <div class="mb-3">
+                            <label class="form-label">Image</label>
+                            <input type="file" class="form-control" id="edit_image" name="image" accept="image/*" required>
+                            <img src="uploads/" id="imgPreview" width="80" height="60" class="mt-2">
+                        </div>
                         <button type="button" class="btn btn-primary" id="edit_hotel" value="">Modifier</button>
                     </form>
                 </div>
@@ -259,35 +242,39 @@ $hotels = $bdd->query("SELECT id_hotel, image, nom, description, prix, ville, du
         function editHotelModal(hotel) {
             let value = JSON.parse(hotel);
 
-            document.getElementById("id_hotel").value = value.id_hotel;
-            document.getElementById("edit_nom").value = value.nom;
-            document.getElementById("edit_description").value = value.description;
-            document.getElementById("edit_prix").value = value.prix;
-            document.getElementById("edit_ville").value = value.ville;
-            document.getElementById("edit_dure").value = value.dure;
+            $("#id_hotel").val(value.id_hotel);
+            $("#edit_nom").val(value.nom);
+            $("#edit_description").val(value.description);
+            $("#edit_prix").val(value.prix);
+            $("#edit_ville").val(value.ville);
+            $("#edit_dure").val(value.dure);
+            $("#image_old").val(value.image);
+            $("#imgPreview").prop("src", "uploads/" + value.image);
             $('#editHotelModal').modal('show');
         }
 
         $("#edit_hotel").click((e) => {
             e.preventDefault();
-            let data = {
-                id_hotel: $("#id_hotel").val(),
-                nom: $("#edit_nom").val(),
-                description: $("#edit_description").val(),
-                prix: $("#edit_prix").val(),
-                ville: $("#edit_ville").val(),
-                dure: $("#edit_dure").val(),
-                edit_hotel: "edit_hotel"
-            }
+            let formData = new FormData();
+            formData.append('id_hotel', $("#id_hotel").val());
+            formData.append('nom', $('#edit_nom').val());
+            formData.append('description', $('#edit_description').val());
+            formData.append('prix', $('#edit_prix').val());
+            formData.append('ville', $('#edit_ville').val());
+            formData.append('dure', $('#edit_dure').val());
+            formData.append('imageName', $('#image_old').val());
+            formData.append('image', $('#edit_image')[0].files[0]);
+            formData.append('edit_hotel', 'edit_hotel');
+
             $.ajax({
                 type: "post",
                 url: "model/app/hotel.php",
-                data: data,
-                dataType: "text",
-                success: function(response) {
-                    let res = JSON.parse(response);
+                data: formData,
+                dataType: "json",
+                processData: false,
+                contentType: false,
+                success: function(res) {
                     if (res.code === 200) {
-                        $('#editHotelModal').modal('hide');
                         successSweetAlert(res.message);
                     } else if (res.code === 400 || res.code === 500) {
                         errorSweetAlert(res.message);
@@ -295,6 +282,35 @@ $hotels = $bdd->query("SELECT id_hotel, image, nom, description, prix, ville, du
                 }
             });
         })
+
+        $("#add_hotel").click((e) => {
+            e.preventDefault();
+            let formData = new FormData();
+            formData.append('nom', $('#nom').val());
+            formData.append('description', $('#description').val());
+            formData.append('prix', $('#prix').val());
+            formData.append('ville', $('#ville').val());
+            formData.append('dure', $('#dure').val());
+            formData.append('image', $('#image')[0].files[0]);
+            formData.append('add_hotel', 'add_hotel');
+            $.ajax({
+                type: "post",
+                url: "model/app/hotel.php",
+                data: formData,
+                dataType: "json",
+                processData: false,
+                contentType: false,
+                success: function(res) {
+                    console.log(res);
+
+                    if (res.code === 200) {
+                        successSweetAlert(res.message);
+                    } else if (res.code === 400 || res.code === 500) {
+                        errorSweetAlert(res.message);
+                    }
+                }
+            });
+        });
 
         function updateStatus(id, status) {
             let verbe = status == "activé" ? "activer" : status == "désactivé" ? "désactiver" : "supprimer";
