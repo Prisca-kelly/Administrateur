@@ -83,10 +83,8 @@ $modePaiements = $sqlModePaiement->fetchAll();
                                                 <td>
 
                                                     <!-- Bouton pour modifier -->
-                                                    <a href="#"
-                                                        onclick="showEditModal('<?= $mode['id_modepaiement'] ?>', '<?= $mode['nom_modepaiement'] ?>', '<?= $mode['description'] ?>')"
-                                                        class="text-warning me-2">
-                                                        <i class="fas fa-edit text-primary" data-bs-toggle="modal" data-bs-target="#updateModePaiementModal"></i>
+                                                    <a href="#" class="text-warning disabled me-2" data-bs-toggle="tooltip" data-bs-placement="top" title="Modification impossible pour le moment">
+                                                        <i class="fas fa-edit text-primary"></i>
                                                     </a>
                                                     <?php
                                                     if ($mode['statut'] == "inactif" || $mode['statut'] == "supprimé") { ?>

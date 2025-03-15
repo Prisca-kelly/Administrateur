@@ -53,7 +53,15 @@ $hotels = $bdd->query("SELECT id_hotel, image, nom, description, prix, ville, du
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <?php foreach ($hotels as $hotel) : ?>
+                                        <?php
+                                        if (count($hotels) == 0) { ?>
+                                            <tr>
+                                                <td colspan="8" class="text-center">
+                                                    Aucun hôtel enregistré !
+                                                </td>
+                                            </tr>
+                                        <?php }
+                                        foreach ($hotels as $hotel) : ?>
                                             <tr>
                                                 <td>
                                                     <img src="uploads/<?= htmlspecialchars($hotel['image']) ?>"
